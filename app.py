@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
 from video_object_detection import VideoObjectDetection
 from image_object_detection import ImageObjectDetection
@@ -124,7 +125,7 @@ with st.sidebar:
     )
 
 
-st.title('Open-source Computer Vision')
+st.title('DeepNet Image Classification')
 
 # Load and display local gif file
 file_ = open("resources/camera-robot-eye.gif", "rb")
@@ -150,11 +151,6 @@ if page == "Welcome!":
         Run computer vision tasks on:
         
             * Images
-                * Examples
-                * Upload your own
-            * Video
-                * Webcam
-                * Examples
                 * Upload your own
         """
     )
