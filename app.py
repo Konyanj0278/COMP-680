@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 from video_object_detection import VideoObjectDetection
 from image_object_detection import ImageObjectDetection
+from streamlit_login_auth_ui.widgets import __login__
 # from facial_emotion_recognition import FacialEmotionRecognition
 from hand_gesture_classification import HandGestureClassification
 from image_optical_character_recgonition import ImageOpticalCharacterRecognition
@@ -27,6 +28,8 @@ import matplotlib.cm
 # errors in logs, should they show up
 import warnings
 warnings.filterwarnings("ignore")
+
+
 
 # Hide Streamlit logo
 hide_streamlit_style = """
@@ -76,40 +79,40 @@ image_classifier = load_image_classifier()
 
 # Paths for image examples
 image_examples = {'Traffic': 'examples/Traffic.jpeg',
-                  'Barbeque': 'examples/Barbeque.jpeg',
-                  'Home Office': 'examples/Home Office.jpeg',
-                  'Car': 'examples/Car.jpeg',
-                  'Dog': 'examples/Dog.jpeg',
-                  'Tropics': 'examples/Tropics.jpeg',
-                  'Quick Brown Dog': 'examples/Quick Brown Dog.png',
-                  'Receipt': 'examples/Receipt.png',
-                  'Street Sign': 'examples/Street Sign.jpeg',
-                  'Kanye': 'examples/Kanye.png',
-                  'Shocked': 'examples/Shocked.png',
-                  'Yelling': 'examples/Yelling.jpeg'}
+                'Barbeque': 'examples/Barbeque.jpeg',
+                'Home Office': 'examples/Home Office.jpeg',
+                'Car': 'examples/Car.jpeg',
+                'Dog': 'examples/Dog.jpeg',
+                'Tropics': 'examples/Tropics.jpeg',
+                'Quick Brown Dog': 'examples/Quick Brown Dog.png',
+                'Receipt': 'examples/Receipt.png',
+                'Street Sign': 'examples/Street Sign.jpeg',
+                'Kanye': 'examples/Kanye.png',
+                'Shocked': 'examples/Shocked.png',
+                'Yelling': 'examples/Yelling.jpeg'}
 
 # Paths for video examples
 video_examples = {'Traffic': 'examples/Traffic.mp4',
-                  'Elephant': 'examples/Elephant.mp4',
-                  'Airport': 'examples/Airport.mp4',
-                  'Kanye': 'examples/Kanye.mp4',
-                  'Laughing Guy': 'examples/Laughing Guy.mp4',
-                  'Parks and Recreation': 'examples/Parks and Recreation.mp4'}
+                'Elephant': 'examples/Elephant.mp4',
+                'Airport': 'examples/Airport.mp4',
+                'Kanye': 'examples/Kanye.mp4',
+                'Laughing Guy': 'examples/Laughing Guy.mp4',
+                'Parks and Recreation': 'examples/Parks and Recreation.mp4'}
 
 # Create streamlit sidebar with options for different tasks
 with st.sidebar:
     page = option_menu(menu_title='Menu',
-                       menu_icon="robot",
-                       options=["Welcome!",
+                    menu_icon="robot",
+                    options=["Welcome!",
                                 "Image Classification"],
-                       icons=["house-door",
-                              "search",
-                              "emoji-smile",
-                              "hand-thumbs-up",
-                              "eyeglasses",
-                              "check-circle"],
-                       default_index=0,
-                       )
+                    icons=["house-door",
+                            "search",
+                            "emoji-smile",
+                            "hand-thumbs-up",
+                            "eyeglasses",
+                            "check-circle"],
+                    default_index=0,
+                    )
 
     # Make sidebar slightly larger to accommodate larger names
     st.markdown(
@@ -127,20 +130,20 @@ with st.sidebar:
 st.title('Open-source Computer Vision')
 
 # Load and display local gif file
-file_ = open("resources/camera-robot-eye.gif", "rb")
-contents = file_.read()
-data_url = base64.b64encode(contents).decode("utf-8")
-file_.close()
+#file_ = open("resources/camera-robot-eye.gif", "rb")
+#contents = file_.read()
+#data_url = base64.b64encode(contents).decode("utf-8")
+#file_.close()
 
 # Page Definitions
 if page == "Welcome!":
 
     # Page info display
-    st.header('Welcome!')
-    st.markdown(
-        f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
-        unsafe_allow_html=True,
-    )
+    # st.header('Welcome!')
+    # st.markdown(
+    #     f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
+    #     unsafe_allow_html=True,
+    # )
 
     st.subheader('Quickstart')
     st.write(
@@ -161,11 +164,11 @@ if page == "Welcome!":
 
     st.subheader("Introduction")
     st.write("""
-       This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
+    This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
         """
-             )
+            )
 
-   
+
 
 # if page == "Object Detection":
 
@@ -520,4 +523,4 @@ elif page == 'Image Classification':
             st.write("")
             csv = preds.to_csv(index=False).encode('utf-8')
             st.download_button('Download Predictions',csv,
-                               file_name='classification_predictions.csv')
+                            file_name='classification_predictions.csv')
