@@ -127,11 +127,11 @@ with st.sidebar:
 
 st.title('DeepNet Image Classification')
 
-# Load and display local gif file
-file_ = open("resources/camera-robot-eye.gif", "rb")
-contents = file_.read()
-data_url = base64.b64encode(contents).decode("utf-8")
-file_.close()
+# # Load and display local gif file
+# file_ = open("resources/camera-robot-eye.gif", "rb")
+# contents = file_.read()
+# data_url = base64.b64encode(contents).decode("utf-8")
+# file_.close()
 
 # Page Definitions
 if page == "Welcome!":
