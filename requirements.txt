@@ -6,7 +6,7 @@ timm
 mediapipe
 streamlit
 streamlit_webrtc
-tensorflow==2.14.1
+tensorflow
 transformers
 plotly
 torch
@@ -17,3 +17,4 @@ protobuf
 fer
 easyocr
 ipython
+streamlit-login-auth-ui
