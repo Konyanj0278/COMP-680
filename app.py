@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
 from video_object_detection import VideoObjectDetection
 from image_object_detection import ImageObjectDetection
@@ -186,6 +187,7 @@ if LOGGED_IN:
         st.write("""
         This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
             """
+
                 )
 
 
