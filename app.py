@@ -589,6 +589,10 @@ if LOGGED_IN:
             st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
             with st.chat_message("user"):
                 st.image(file, caption="Uploaded an image.")
+            # Chatbot response
+            st.session_state.messages.append({"role": "assistant", "content": "Thank you"})
+            with st.chat_message("assistant"):
+                st.markdown("Processing image...")
 
         # Accept user input
         if prompt := st.chat_input("Upload an image or say something..."):
