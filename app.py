@@ -125,13 +125,11 @@ if LOGGED_IN:
         page = option_menu(menu_title='Menu',
                         menu_icon="robot",
                         options=["Welcome!",
-                                    "Image Classification"],
+                                    "Image Classification",
+                                    "Chat"],
                         icons=["house-door",
                                 "search",
-                                "emoji-smile",
-                                "hand-thumbs-up",
-                                "eyeglasses",
-                                "check-circle"],
+                                "chat"],
                         default_index=0,
                         )
 
@@ -190,6 +188,9 @@ if LOGGED_IN:
 
                 )
 
+    elif page == "Chatbot":
+        st.header('New Tab')
+        st.write('This is a new empty tab.')
 
 
     # if page == "Object Detection":
