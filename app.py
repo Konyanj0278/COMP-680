@@ -76,7 +76,7 @@ if LOGGED_IN:
     # def load_image_object_detection():
     #     return ImageObjectDetection()
 
-    @st.cache(allow_output_mutation=True)
+    @st.cache_resource
     def load_image_classifier():
         return ImageClassification()
 
@@ -88,7 +88,7 @@ if LOGGED_IN:
     # def load_hand_gesture_classifier():
     #     return HandGestureClassification()
 
-    @st.cache(allow_output_mutation=True)
+    @st.cache_resource
     def load_image_optical_character_recognition():
         return ImageOpticalCharacterRecognition()
 
