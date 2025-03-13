@@ -589,21 +589,22 @@ if LOGGED_IN:
             st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
             with st.chat_message("user"):
                 st.image(file, caption="Uploaded an image.")
-            # Chatbot response
-            st.session_state.messages.append({"role": "assistant", "content": "Thank you"})
+            # Chatbot response for image upload
+            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
             with st.chat_message("assistant"):
                 st.markdown("Processing image...")
+                # Call image classification model
+                # img1 = Image.open(file)
+                # preds = image_classifier.classify(img1)
+                # st.write(preds)
 
-        # Accept user input
+        # Chatbot response for text input
         if prompt := st.chat_input("Upload an image or say something..."):
-            # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
-            # Display user message in chat message container
             with st.chat_message("user"):
                 st.markdown(prompt)
 
-            # Display assistant response in chat message container
+            # Chat random response
             with st.chat_message("assistant"):
                 response = st.write_stream(response_generator())
-            # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
