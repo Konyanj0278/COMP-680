@@ -548,30 +548,47 @@ if LOGGED_IN:
                                 file_name='classification_predictions.csv')
                 
     elif page == "Chatbot":
-       # Streamed response emulator
+
+        st.header("Chatbot")
+
+        # File uploader form
+        with st.form("my-form", clear_on_submit=True):
+            file = st.file_uploader("Upload an image to classify...", type=["jpg", "jpeg", "png"])
+            submitted = st.form_submit_button("UPLOAD!")
+
+        # Streamed response emulator
         def response_generator():
             response = random.choice(
                 [
-                    "Hello there! How can I assist you today?",
-                    "Hi! Is there anything I can help you with?",
-                    "Do you need help?",
+                    "Hello there! Do you have an image that I can classify?",
+                    "Hi! Is there an image I can help you with?",
+                    "Upload an image and I can help you with that!",
+                    "I'm here to help! Just upload an image.",
+                    "Need assistance with an image?",
+                    "I'm ready to classify an image for you!",
+                    "What's up! I can help you with image classification."
                 ]
             )
             for word in response.split():
                 yield word + " "
                 time.sleep(0.05)
 
-
-        st.header("Chatbot")
-
         # Initialize chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
         # Display chat messages from history on app rerun
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+        with st.container():
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+                    if message["role"] == "user" and "image" in message:
+                        st.image(message["image"], caption="Uploaded an image.")
+
+        if submitted and file is not None:
+            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
+            with st.chat_message("user"):
+                st.image(file, caption="Uploaded an image.")
 
         # Accept user input
         if prompt := st.chat_input("Upload an image or say something..."):
