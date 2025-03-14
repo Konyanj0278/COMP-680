@@ -43,5 +43,5 @@ Ensure you have the following installed (managed via `requirements.txt`):
 - Use the chat interface to ask questions about the classification results.
 
 ## Important Callouts
-- For this project we made use of the following repo: https://github.com/GauriSP10/streamlit_login_auth_ui. However, since the repo was created the email handled Courier has changed the way their  API works. Thus we have copied the base repo into our repo (located in the Login folder) and modified certain parts to to make use of the new Python library aiosmtpd and Google for email handling.
+- For this project we made use of the following repo: https://github.com/GauriSP10/streamlit_login_auth_ui. However, since the repo was created the email handler Courier has changed the way their  API works. Thus we have copied the base repo into our repo (located in the Login folder) and modified certain parts to to make use of the new Python library aiosmtpd and Google for email handling.
 
