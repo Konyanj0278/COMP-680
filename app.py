@@ -1,32 +1,13 @@
 import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
-from video_object_detection import VideoObjectDetection
-from image_object_detection import ImageObjectDetection
 from streamlit_login_auth_ui.widgets import __login__
-# from facial_emotion_recognition import FacialEmotionRecognition
-from hand_gesture_classification import HandGestureClassification
-from image_optical_character_recgonition import ImageOpticalCharacterRecognition
 from image_classification import ImageClassification
-from video_utils import create_video_frames
 import plotly.express as px
 from PIL import Image
-from io import BytesIO
-import base64
-import json
-import os
-import cv2
-import numpy as np
-import matplotlib.cm
 import random
 import time
 
-# from streamlit_webrtc import (
-#     RTCConfiguration,
-#     WebRtcMode,
-#     WebRtcStreamerContext,
-#     webrtc_streamer,
-# )
 
 # 🔐 Initialize Login System
 __login__obj = __login__(
@@ -43,7 +24,6 @@ __login__obj = __login__(
 # Check if user is logged in
 LOGGED_IN = __login__obj.build_login_ui()
 
-# 🚀 If user is logged in, allow access to app
 if LOGGED_IN:
     st.success("Welcome! You are logged in.")
 
@@ -72,14 +52,6 @@ if LOGGED_IN:
     def load_image_classifier():
         return ImageClassification()
 
-
-
-    @st.cache_resource
-    def load_image_optical_character_recognition():
-        return ImageOpticalCharacterRecognition()
-
-
-    image_optical_character_recognition = load_image_optical_character_recognition()
     image_classifier = load_image_classifier()
 
     # Create streamlit sidebar with options for different tasks
@@ -110,38 +82,14 @@ if LOGGED_IN:
 
     st.title('Deep Net')
 
-    # Load and display local gif file
-    #file_ = open("resources/camera-robot-eye.gif", "rb")
-    #contents = file_.read()
-    #data_url = base64.b64encode(contents).decode("utf-8")
-    #file_.close()
 
     # Page Definitions
     if page == "Welcome!":
 
-        # Page info display
-        # st.header('Welcome!')
-        # st.markdown(
-        #     f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
-        #     unsafe_allow_html=True,
-        # )
+
 
         st.subheader('Quickstart')
-        st.write(
-            """
-            Flip through the pages in the menu on the left hand side bar to perform CV tasks on-demand!
-            
-            Run computer vision tasks on:
-            
-                * Images
-                    * Examples
-                    * Upload your own
-                * Video
-                    * Webcam
-                    * Examples
-                    * Upload your own
-            """
-        )
+        st.write("Use the navigation tab on the left hand side to visit different links.")
 
         st.subheader("Introduction")
         st.write("""
@@ -149,38 +97,6 @@ if LOGGED_IN:
             """
 
                 )
-    elif page == 'Optical Character Recognition':
-
-        # Page info display
-        st.header('Image Optical Character Recognition')
-        st.markdown("![Alt Text](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif)")
-
-        # User selected option for data type
-        input_type = st.radio(
-            "Use example or upload your own?",
-            ('Example', 'Upload'))
-      
-        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
-
-        if st.button('Submit'):
-            # Run OCR
-            with st.spinner("Running optical character recognition..."):
-                annotated_image, text = image_optical_character_recognition.image_ocr(uploaded_file)
-
-            # Create image buffer and download
-            buf = BytesIO()
-            annotated_image.save(buf, format="PNG")
-            byte_im = buf.getvalue()
-
-            # Display and provide download option for annotated image
-            st.subheader("Captioning Prediction")
-            st.image(annotated_image)
-            if text == '':
-                st.wite("No text in this image...")
-            else:
-                st.write(text)
-
-                st.download_button('Download Text', data=text, file_name='outputs/ocr_pred.txt')
 
     elif page == 'Image Classification':
 
