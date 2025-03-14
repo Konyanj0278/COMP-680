@@ -1,7 +1,6 @@
 All notable changes to this project will be documented in this file.
 
 [0.0.3] - 2025-03-14 - Jack Konyan 
-- Switched to a Google model: google/vit-base-patch16-224
 - Migrated the login library into the code base
 - Modified email handler code to use google  
 
