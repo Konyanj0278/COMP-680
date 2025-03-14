@@ -7,7 +7,7 @@ import smtplib, ssl
 
 ph = PasswordHasher() 
 
-def email_handler():
+def email_handler(email,email_address):
     port = 1025  # For SSL
     password = input("Type your password and press enter: ")
 
@@ -15,7 +15,9 @@ def email_handler():
     context = ssl.create_default_context()
 
     with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-        server.login("jackkonyan@gmail.com", "password")
+        server.login("test@gmail.com", "password") # Will need to create a new email for this
+        server.ehlo()
+        server.sendmail("test@gmail.com", email_address, email)# use the created email for this
 
 def check_usr_pass(username: str, password: str) -> bool:
     """
@@ -176,25 +178,11 @@ def generate_random_passwd() -> str:
 
 
 def send_passwd_in_email(auth_token: str, username_forgot_passwd: str, email_forgot_passwd: str, company_name: str, random_password: str) -> None:
-    """
-    Triggers an email to the user containing the randomly generated password.
-    """
-    client = Courier(auth_token = auth_token)
 
-    resp = client.send_message(
-    message={
-        "to": {
-        "email": email_forgot_passwd
-        },
-        "content": {
-        "title": company_name + ": Login Password!",
-        "body": "Hi! " + username_forgot_passwd + "," + "\n" + "\n" + "Your temporary login password is: " + random_password  + "\n" + "\n" + "{{info}}"
-        },
-        "data":{
-        "info": "Please reset your password at the earliest for security reasons."
-        }
-    }
-    )
+    message= "Hi! " + username_forgot_passwd + "," + "\n" + "\n" + "Your temporary login password is: " + random_password  + "\n" +  "Please reset your password at the earliest for security reasons."
+    
+    email_handler(message,email_forgot_passwd)
+    
 
 
 def change_passwd(email_: str, random_password: str) -> None:
