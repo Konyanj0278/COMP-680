@@ -12,13 +12,13 @@ import time
 # 🔐 Initialize Login System
 __login__obj = __login__(
     auth_token="your_courier_auth_token",  # Replace this with your actual Courier API key
-    company_name="My App",
+    company_name="Deep Net",
     width=200,
     height=250,
     logout_button_name="Logout",
     hide_menu_bool=False,
     hide_footer_bool=False,
-    lottie_url="https://assets10.lottiefiles.com/packages/lf20_jcikwtux.json"
+
 )
 
 # Check if user is logged in

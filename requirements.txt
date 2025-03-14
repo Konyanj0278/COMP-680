@@ -18,3 +18,4 @@ fer
 easyocr
 ipython
 streamlit-login-auth-ui
+argon2-cffi

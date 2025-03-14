@@ -5,31 +5,15 @@ from torch.nn import Softmax as softmax
 
 
 class ImageClassification:
-    """
-    XXXXX.
-    """
+
 
     def __init__(self):
-        """
-        The constructor for XXX class.
-        Attributes:
-            xxx: ___
-            xxx: ___
-            xxx: ___
-        """
 
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained("microsoft/resnet-50")
-        self.model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
+
+        self.feature_extractor = AutoFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
+        self.model = ResNetForImageClassification.from_pretrained("google/vit-base-patch16-224")
 
     def classify(self, image):
-        """
-        XXX.
-
-        Parameters:
-            xxx (type): ___
-        Returns:
-            xxx (type): ___
-        """
 
         inputs = self.feature_extractor(images=image, return_tensors="pt")
         outputs = self.model(**inputs)
