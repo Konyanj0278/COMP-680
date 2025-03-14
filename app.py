@@ -1,332 +1,242 @@
 import streamlit as st
+from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
-from image_object_detection import ImageObjectDetection
-from image_classification import ImageClassification
-from image_optical_character_recgonition import ImageOpticalCharacterRecognition
-from video_object_detection import VideoObjectDetection
-from video_utils import create_video_frames
-from PIL import Image
-import cv2
-import numpy as np
-import base64
-import json
-import os
-import av
-from io import BytesIO
+from streamlit_login_auth_ui.widgets import __login__
+from src.model import ImageClassification
 import plotly.express as px
-from transformers import AutoFeatureExtractor
-import timm
-import torch
-from torchvision import transforms
+from src.image_object_detection import ImageObjectDetection
+from src.model import ImageClassification
+from src.image_optical_character_recgonition import ImageOpticalCharacterRecognition
 
-# Hide warnings
-import warnings
-warnings.filterwarnings("ignore")
+from PIL import Image
+import random
+import time
 
-# Hide Streamlit logo
-hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
+
+# 🔐 Initialize Login System
+__login__obj = __login__(
+    auth_token="your_courier_auth_token",  # Replace this with your actual Courier API key
+    company_name="Deep Net",
+    width=200,
+    height=250,
+    logout_button_name="Logout",
+    hide_menu_bool=False,
+    hide_footer_bool=False,
+
+)
+
+# Check if user is logged in
+LOGGED_IN = __login__obj.build_login_ui()
+
+if LOGGED_IN:
+    st.success("Welcome! You are logged in.")
+
+
+    # Hide warnings to make it easier to locate
+    # errors in logs, should they show up
+    import warnings
+    warnings.filterwarnings("ignore")
+
+
+
+    # Hide Streamlit logo
+    hide_streamlit_style = """
+                <style>
+                #MainMenu {visibility: hidden;}
+                footer {visibility: hidden;}
+                </style>
+                """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+    # Make Radio buttons horizontal
+    st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
+
+
+    @st.cache_resource
+    def load_image_classifier():
+        return ImageClassification()
+
+    image_classifier = load_image_classifier()
+
+    # Create streamlit sidebar with options for different tasks
+    with st.sidebar:
+        page = option_menu(menu_title='Menu',
+                        menu_icon="robot",
+                        options=["Welcome!",
+                                    "Image Classification",
+                                    "Chatbot"],
+                        icons=["house-door",
+                                "search",
+                                "chat"],
+                        default_index=0,
+                        )
+
+        # Make sidebar slightly larger to accommodate larger names
+        st.markdown(
             """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+            <style>
+            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+                width: 350px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
 
-# Make Radio buttons horizontal
-st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
-# Load models
-@st.cache(allow_output_mutation=True)
-def load_image_object_detection():
-    return ImageObjectDetection()
+    st.title('Deep Net')
 
-@st.cache(allow_output_mutation=True)
-def load_image_classifier():
-    return ImageClassification()
 
-@st.cache(allow_output_mutation=True)
-def load_image_optical_character_recognition():
-    return ImageOpticalCharacterRecognition()
+    # Page Definitions
+    if page == "Welcome!":
 
-@st.cache(allow_output_mutation=True)
-def load_video_object_detection():
-    return VideoObjectDetection()
 
-# Paths for image examples
-image_examples = {
-    'Traffic': 'examples/Traffic.jpeg',
-    'Barbeque': 'examples/Barbeque.jpeg',
-    'Home Office': 'examples/Home Office.jpeg',
-    'Car': 'examples/Car.jpeg',
-    'Dog': 'examples/Dog.jpeg',
-    'Tropics': 'examples/Tropics.jpeg',
-    'Quick Brown Dog': 'examples/Quick Brown Dog.png',
-    'Receipt': 'examples/Receipt.png',
-    'Street Sign': 'examples/Street Sign.jpeg',
-    'Kanye': 'examples/Kanye.png',
-    'Shocked': 'examples/Shocked.png',
-    'Yelling': 'examples/Yelling.jpeg'
-}
 
-# Paths for video examples
-video_examples = {
-    'Traffic': 'examples/Traffic.mp4',
-    'Elephant': 'examples/Elephant.mp4',
-    'Airport': 'examples/Airport.mp4',
-    'Kanye': 'examples/Kanye.mp4',
-    'Laughing Guy': 'examples/Laughing Guy.mp4',
-    'Parks and Recreation': 'examples/Parks and Recreation.mp4'
-}
+        st.subheader('Quickstart')
+        st.write("Use the navigation tab on the left hand side to visit different links.")
 
-# Create streamlit sidebar with options for different tasks
-with st.sidebar:
-    page = option_menu(
-        menu_title='Menu',
-        menu_icon="robot",
-        options=["Welcome!", "Object Detection", "Image Classification", "Optical Character Recognition"],
-        icons=["house-door", "search", "emoji-smile", "eyeglasses"],
-        default_index=0,
-    )
+        st.subheader("Introduction")
+        st.write("""
+        This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
+            """
 
-    # Add confidence threshold slider
-    confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.5, 0.01)
+                )
+    elif page == "Object Detection":
+        st.header('Object Detection')
+        st.markdown("![Alt Text](https://media.giphy.com/media/vAvWgk3NCFXTa/giphy.gif)")
+        st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection. Try it out!")
 
-    # Make sidebar slightly larger
-    st.markdown(
-        """
-        <style>
-        [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-            width: 350px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+        # User selected option for data type
+        data_type = st.radio(
+            "Select Data Type",
+            ('Webcam', 'Video', 'Image'))
 
-# Commented out the missing GIF file code
-# file_ = open("resources/camera-robot-eye.gif", "rb")
-# contents = file_.read()
-# data_url = base64.b64encode(contents).decode("utf-8")
-# file_.close()
+        if data_type == 'Image':
+            input_type = st.radio(
+                "Use example or upload your own?",
+                ('Example', 'Upload'))
 
-# Page Definitions
-if page == "Welcome!":
-    st.header('Welcome!')
-    # Commented out the GIF display
-    # st.markdown(
-    #     f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
-    #     unsafe_allow_html=True,
-    # )
+            # Load in example or uploaded image
+            if input_type == 'Example':
+                option = st.selectbox(
+                    'Which example would you like to use?',
+                    ('Home Office', 'Traffic', 'Barbeque'))
+                uploaded_file = image_examples[option]
+            else:
+                uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
 
-    st.subheader('Quickstart')
-    st.write(
-        """
-        Flip through the pages in the menu on the left-hand sidebar to perform CV tasks on-demand!
+            # Run detection and provide download options when user clicks run!
+            if st.button('🔥 Run!'):
+                if uploaded_file is None:
+                    st.error("No file uploaded yet.")
+                else:
+                    with st.spinner("Running object detection..."):
+                        img = Image.open(uploaded_file)
+                        image_object_detection = load_image_object_detection()
+                        labeled_image, detections = image_object_detection.classify(img)
 
-        Run computer vision tasks on:
-        
-            * Images
-                * Examples
-                * Upload your own
-            * Video
-                * Webcam
-                * Examples
-                * Upload your own
-        """
-    )
+                    if labeled_image and detections:
+                        buf = BytesIO()
+                        labeled_image.save(buf, format="PNG")
+                        byte_im = buf.getvalue()
 
-    st.subheader("Introduction")
-    st.write("""
-       This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and object detection. It utilizes state-of-the-art models like YOLOv8 and EfficientNet-B7 to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
-        """
-    )
+                        st.subheader("Object Detection Predictions")
+                        st.image(labeled_image)
+                        st.download_button('Download Image', data=byte_im, file_name="image_object_detection.png", mime="image/jpeg")
 
-elif page == "Object Detection":
-    st.header('Object Detection')
-    st.markdown("![Alt Text](https://media.giphy.com/media/vAvWgk3NCFXTa/giphy.gif)")
-    st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection. Try it out!")
+                        st.json(detections)
+                        st.download_button('Download Predictions', json.dumps(detections), file_name='image_object_detection.json')
 
-    # User selected option for data type
-    data_type = st.radio(
-        "Select Data Type",
-        ('Webcam', 'Video', 'Image'))
+    elif page == 'Image Classification':
 
-    if data_type == 'Image':
+        # Page info display
+        st.header('Image Classification')
+        # User selected option for data type
         input_type = st.radio(
             "Use example or upload your own?",
             ('Example', 'Upload'))
 
-        # Load in example or uploaded image
-        if input_type == 'Example':
-            option = st.selectbox(
-                'Which example would you like to use?',
-                ('Home Office', 'Traffic', 'Barbeque'))
-            uploaded_file = image_examples[option]
-        else:
-            uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
 
-        # Run detection and provide download options when user clicks run!
-        if st.button('🔥 Run!'):
+        if st.button('Submit!'):
+            # Throw error if there is no file
             if uploaded_file is None:
                 st.error("No file uploaded yet.")
             else:
-                with st.spinner("Running object detection..."):
+                # Run classification
+                with st.spinner("Running classification..."):
                     img = Image.open(uploaded_file)
-                    image_object_detection = load_image_object_detection()
-                    labeled_image, detections = image_object_detection.classify(img)
+                    preds = image_classifier.classify(img)
 
-                if labeled_image and detections:
-                    buf = BytesIO()
-                    labeled_image.save(buf, format="PNG")
-                    byte_im = buf.getvalue()
+                # Display image
+                st.subheader("Classification Predictions")
+                st.image(img)
+                fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
+                st.write(fig)
 
-                    st.subheader("Object Detection Predictions")
-                    st.image(labeled_image)
-                    st.download_button('Download Image', data=byte_im, file_name="image_object_detection.png", mime="image/jpeg")
+                # Provide download option for predictions
+                st.write("")
+                csv = preds.to_csv(index=False).encode('utf-8')
+                st.download_button('Download Predictions',csv,
+                                file_name='classification_predictions.csv')
+                
+    elif page == "Chatbot":
 
-                    st.json(detections)
-                    st.download_button('Download Predictions', json.dumps(detections), file_name='image_object_detection.json')
+        st.header("Chatbot")
 
-elif page == 'Image Classification':
-    st.header('Image Classification')
-    st.markdown("![Alt Text](https://media.giphy.com/media/Zvgb12U8GNjvq/giphy.gif)")
+        # File uploader form
+        with st.form("my-form", clear_on_submit=True):
+            file = st.file_uploader("Upload an image to classify...", type=["jpg", "jpeg", "png"])
+            submitted = st.form_submit_button("UPLOAD!")
 
-    input_type = st.radio(
-        "Use example or upload your own?",
-        ('Example', 'Upload'))
+        # Streamed response emulator
+        def response_generator():
+            response = random.choice(
+                [
+                    "Hello there! Do you have an image that I can classify?",
+                    "Hi! Is there an image I can help you with?",
+                    "Upload an image and I can help you with that!",
+                    "I'm here to help! Just upload an image.",
+                    "Need assistance with an image?",
+                    "I'm ready to classify an image for you!",
+                    "What's up! I can help you with image classification."
+                ]
+            )
+            for word in response.split():
+                yield word + " "
+                time.sleep(0.05)
 
-    if input_type == 'Example':
-        option = st.selectbox(
-            'Which example would you like to use?',
-            ('Car', 'Dog', 'Tropics'))
-        uploaded_file = image_examples[option]
-    else:
-        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-    if st.button('🔥 Run!'):
-        if uploaded_file is None:
-            st.error("No file uploaded yet.")
-        else:
-            with st.spinner("Running classification..."):
-                img = Image.open(uploaded_file)
-                image_classifier = load_image_classifier()
-                preds = image_classifier.classify(img)
+        # Display chat messages from history on app rerun
+        with st.container():
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+                    if message["role"] == "user" and "image" in message:
+                        st.image(message["image"], caption="Uploaded an image.")
 
-            st.subheader("Classification Predictions")
-            st.image(img)
-            fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
-            st.write(fig)
+        if submitted and file is not None:
+            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
+            with st.chat_message("user"):
+                st.image(file, caption="Uploaded an image.")
+            # Chatbot response for image upload
+            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
+            with st.chat_message("assistant"):
+                st.markdown("Processing image...")
+                # The classifier is defined as a global var 
+                preds = image_classifier.classify(file)
+                st.write(preds)
 
-            csv = preds.to_csv(index=False).encode('utf-8')
-            st.download_button('Download Predictions', csv, file_name='classification_predictions.csv')
+        # Chatbot response for text input
+        if prompt := st.chat_input("Upload an image or say something..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-elif page == 'Optical Character Recognition':
-    st.header('Image Optical Character Recognition')
-    st.markdown("![Alt Text](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif)")
-
-    input_type = st.radio(
-        "Use example or upload your own?",
-        ('Example', 'Upload'))
-
-    if input_type == 'Example':
-        option = st.selectbox(
-            'Which example would you like to use?',
-            ('Quick Brown Dog', 'Receipt', 'Street Sign'))
-        uploaded_file = image_examples[option]
-    else:
-        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
-
-    if st.button('🔥 Run!'):
-        with st.spinner("Running optical character recognition..."):
-            image_ocr = load_image_optical_character_recognition()
-            annotated_image, text = image_ocr.image_ocr(uploaded_file)
-
-        buf = BytesIO()
-        annotated_image.save(buf, format="PNG")
-        byte_im = buf.getvalue()
-
-        st.subheader("OCR Predictions")
-        st.image(annotated_image)
-        if text == '':
-            st.write("No text in this image...")
-        else:
-            st.write(text)
-            st.download_button('Download Text', data=text, file_name='outputs/ocr_pred.txt')
-
-class ImageClassification:
-    def __init__(self):
-        # Load EfficientNet-B0 from timm
-        self.model = timm.create_model('efficientnet_b0', pretrained=True)
-        self.model.eval()
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-
-    def classify(self, image):
-        # Preprocess the image
-        image = self.transform(image).unsqueeze(0)
-        with torch.no_grad():
-            outputs = self.model(image)
-        # Convert outputs to probabilities and class labels
-        probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
-        return probabilities
-
-import streamlit as st
-from image_classification import ImageClassification
-from image_optical_character_recgonition import ImageOpticalCharacterRecognition
-from PIL import Image
-
-# Sidebar menu
-page = st.sidebar.selectbox("Select a page", ["Welcome", "Image Classification", "Optical Character Recognition (OCR)"])
-
-if page == "Welcome":
-    # Welcome Page
-    st.title("Welcome to the Application!")
-    st.write("Navigate to the sidebar to perform tasks.")
-
-elif page == "Image Classification":
-    # Image Classification Page
-    st.title("Image Classification")
-
-    # File uploader for classification
-    uploaded_file_classification = st.file_uploader("Upload an image for classification", type=["png", "jpg", "jpeg"], key="classification_uploader")
-
-    if uploaded_file_classification is not None:
-        # Convert the uploaded file to a PIL image
-        image = Image.open(uploaded_file_classification)
-
-        # Initialize the ImageClassification class
-        image_classifier = ImageClassification()
-
-        # Perform classification
-        predictions = image_classifier.classify(image)
-
-        # Display results
-        st.subheader("Image Classification Predictions")
-        st.image(image)
-        st.write(predictions)
-
-elif page == "Optical Character Recognition (OCR)":
-    # OCR Page
-    st.title("Optical Character Recognition (OCR)")
-
-    # File uploader for OCR
-    uploaded_file_ocr = st.file_uploader("Upload an image for OCR", type=["png", "jpg", "jpeg"], key="ocr_uploader")
-
-    if uploaded_file_ocr is not None:
-        # Initialize the OCR class
-        image_ocr = ImageOpticalCharacterRecognition()
-
-        # Perform OCR
-        annotated_image, text = image_ocr.image_ocr(uploaded_file_ocr)
-
-        # Display results
-        st.subheader("OCR Predictions")
-        st.image(annotated_image)
-        if text == '':
-            st.write("No text in this image...")
-        else:
-            st.write(text)
-            st.download_button('Download Text', data=text, file_name='ocr_predictions.txt')
+            # Chat random response
+            with st.chat_message("assistant"):
+                response = st.write_stream(response_generator())
+            st.session_state.messages.append({"role": "assistant", "content": response})
