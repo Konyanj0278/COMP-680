@@ -1,47 +1,50 @@
-from transformers import DetrFeatureExtractor, DetrForObjectDetection
+from ultralytics import YOLO
+from PIL import Image
 import torch
-from object_detection_utils import *
-
+from object_detection_utils import visualize_prediction
 
 class ImageObjectDetection:
     """
-    Object detection on images.
+    Object detection on images using YOLOv8.
     """
 
     def __init__(self):
         """
         The constructor for ImageObjectDetection class.
         Attributes:
-            feature_extractor: model for extracting features from image
-            model: model for performing object detection, utilizing extracted features
+            model: YOLOv8 model for object detection
         """
-
-        self.feature_extractor = DetrFeatureExtractor.from_pretrained('facebook/detr-resnet-50')
-        self.model = DetrForObjectDetection.from_pretrained('facebook/detr-resnet-50')
+        self.model = YOLO('yolov8n.pt')  # Load YOLOv8 model
 
     def classify(self, image):
         """
-        Detect objects in image.
+        Detect objects in image using YOLOv8.
 
         Parameters:
             image (PIL image): image to detect objects in
         Returns:
-            viz_img (type): annotated image with predictions
-            filtered_preds (type): predictions for object detection
+            viz_img (PIL Image): annotated image with predictions
+            filtered_preds (dict): predictions for object detection
         """
+        # Perform inference
+        results = self.model(image)
 
-        # Extract features and perform inference
-        inputs = self.feature_extractor(images=image, return_tensors="pt")
-        outputs = self.model(**inputs)
+        # Extract predictions
+        boxes = results[0].boxes.xyxy.tolist()  # Bounding boxes
+        scores = results[0].boxes.conf.tolist()  # Confidence scores
+        labels = results[0].boxes.cls.tolist()   # Class labels
 
-        # get logits and bounding boxes
-        img_size = torch.tensor([tuple(reversed(image.size))])
-        processed_outputs = self.feature_extractor.post_process(outputs, img_size)
+        # Convert labels to class names
+        labels = [self.model.names[int(label)] for label in labels]
 
-        # Grab output predictions
-        output_dict = processed_outputs[0]
+        # Format predictions for visualization
+        output_dict = {
+            "boxes": torch.tensor(boxes),
+            "scores": torch.tensor(scores),
+            "labels": torch.tensor(labels),
+        }
 
         # Draw predictions on raw image
-        viz_img, filtered_preds = visualize_prediction(image, output_dict, id2label=self.model.config.id2label)
+        viz_img, filtered_preds = visualize_prediction(image, output_dict)
 
         return viz_img, filtered_preds

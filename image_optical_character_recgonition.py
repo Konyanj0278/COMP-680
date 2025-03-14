@@ -1,6 +1,7 @@
 import easyocr
 from PIL import Image, ImageDraw
-
+import cv2
+import numpy as np
 
 class ImageOpticalCharacterRecognition:
     """
@@ -41,38 +42,58 @@ class ImageOpticalCharacterRecognition:
 
         return image
 
-    def run_recognition(self, image_path):
+    def run_recognition(self, image):
         """
-        Run ocr and extract relevant results.
+        Run OCR recognition on the image.
 
         Parameters:
-            image_path (str): location for image file
+            image (numpy array): Image to process
         Returns:
-            boxes (list): list for bounding boxes to apply to image
-            text (str): extracted text from image
+            boxes (list): Bounding boxes for detected text
+            text (str): Extracted text
         """
-
-        extracted_text = self.reader.readtext(image_path)
-        boxes = [i[0] for i in extracted_text]
-        text_list = [i[1] for i in extracted_text]
-        probs = [i[2] for i in extracted_text]
-        text = "  \n".join(text_list)
-
+        # Use EasyOCR to read text
+        extracted_text = self.reader.readtext(image)
+        boxes = [item[0] for item in extracted_text]
+        text = " ".join([item[1] for item in extracted_text])
         return boxes, text
 
-    def image_ocr(self, image_path):
+    def annotate_image(self, image, boxes, text):
         """
-        Extract text from image and annotate image.
+        Annotate the image with bounding boxes and text.
 
         Parameters:
-            image_path (str): path to image file
+            image (numpy array): Original image
+            boxes (list): Bounding boxes for detected text
+            text (str): Extracted text
         Returns:
-            annotated_image (PIL Image): image with bounding boxes drawn on it
-            text (str): text extracted from image
+            annotated_image (numpy array): Annotated image
         """
+        for box in boxes:
+            top_left = tuple(map(int, box[0]))
+            bottom_right = tuple(map(int, box[2]))
+            cv2.rectangle(image, top_left, bottom_right, (0, 255, 0), 2)
+        return image
 
-        boxes, text = self.run_recognition(image_path)
-        annotated_image = self.draw_boxes(image_path, boxes, color='green', width=3)
+    def image_ocr(self, uploaded_file):
+        """
+        Perform OCR on the uploaded image file.
 
-        return annotated_image, text
+        Parameters:
+            uploaded_file: The uploaded image file from Streamlit
+        Returns:
+            annotated_image (PIL.Image): Image with OCR annotations
+            text (str): Extracted text from the image
+        """
+        # Convert the uploaded file to a numpy array
+        file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+        # Run OCR
+        boxes, text = self.run_recognition(image)
+
+        # Annotate the image with OCR results
+        annotated_image = self.annotate_image(image, boxes, text)
+
+        return Image.fromarray(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)), text
 
