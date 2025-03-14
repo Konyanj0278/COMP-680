@@ -67,48 +67,20 @@ if LOGGED_IN:
     # Make Radio buttons horizontal
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
-    # Functions to load models
-    # @st.cache(allow_output_mutation=True)
-    # def load_video_object_detection():
-    #     return VideoObjectDetection()
-
-    # @st.cache(allow_output_mutation=True)
-    # def load_image_object_detection():
-    #     return ImageObjectDetection()
 
     @st.cache_resource
     def load_image_classifier():
         return ImageClassification()
 
-    # # @st.cache(allow_output_mutation=True)
-    # # def load_facial_emotion_classifier():
-    # #     return FacialEmotionRecognition()
 
-    # @st.cache(allow_output_mutation=True)
-    # def load_hand_gesture_classifier():
-    #     return HandGestureClassification()
 
     @st.cache_resource
     def load_image_optical_character_recognition():
         return ImageOpticalCharacterRecognition()
 
 
-    # Load models and store in cache
-    # video_object_detection = load_video_object_detection()
-    # image_object_detection = load_image_object_detection()
-    # facial_emotion_classifier = load_facial_emotion_classifier()
-    # hand_gesture_classifier = load_hand_gesture_classifier()
     image_optical_character_recognition = load_image_optical_character_recognition()
     image_classifier = load_image_classifier()
-
-
-    # Paths for video examples
-    video_examples = {'Traffic': 'examples/Traffic.mp4',
-                    'Elephant': 'examples/Elephant.mp4',
-                    'Airport': 'examples/Airport.mp4',
-                    'Kanye': 'examples/Kanye.mp4',
-                    'Laughing Guy': 'examples/Laughing Guy.mp4',
-                    'Parks and Recreation': 'examples/Parks and Recreation.mp4'}
 
     # Create streamlit sidebar with options for different tasks
     with st.sidebar:
@@ -136,7 +108,7 @@ if LOGGED_IN:
         )
 
 
-    st.title('Open-source Computer Vision')
+    st.title('Deep Net')
 
     # Load and display local gif file
     #file_ = open("resources/camera-robot-eye.gif", "rb")
@@ -221,14 +193,7 @@ if LOGGED_IN:
             "Use example or upload your own?",
             ('Example', 'Upload'))
 
-        # Provide option to use example or upload your own
-        if input_type == 'Example':
-            option = st.selectbox(
-                'Which example would you like to use?',
-                ('Car', 'Dog', 'Tropics'))
-            uploaded_file = image_examples[option]
-        else:
-            uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
 
         if st.button('Submit!'):
             # Throw error if there is no file
