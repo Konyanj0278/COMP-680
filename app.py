@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
 from streamlit_login_auth_ui.widgets import __login__
-from image_classification import ImageClassification
+from src.model import ImageClassification
 import plotly.express as px
 from PIL import Image
 import random
@@ -102,8 +102,6 @@ if LOGGED_IN:
 
         # Page info display
         st.header('Image Classification')
-        st.markdown("![Alt Text](https://media.giphy.com/media/Zvgb12U8GNjvq/giphy.gif)")
-
         # User selected option for data type
         input_type = st.radio(
             "Use example or upload your own?",
