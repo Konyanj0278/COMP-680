@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
 from streamlit_login_auth_ui.widgets import __login__
-from image_classification import ImageClassification
+from src.image_classification import ImageClassification
 import plotly.express as px
 from PIL import Image
 import random
