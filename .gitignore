@@ -398,6 +398,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+.vscode/
+venv/
 
-#User settings`
-680/
