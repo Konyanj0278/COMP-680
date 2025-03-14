@@ -593,10 +593,9 @@ if LOGGED_IN:
             st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
             with st.chat_message("assistant"):
                 st.markdown("Processing image...")
-                # Call image classification model
-                # img1 = Image.open(file)
-                # preds = image_classifier.classify(img1)
-                # st.write(preds)
+                # The classifier is defined as a global var 
+                preds = image_classifier.classify(file)
+                st.write(preds)
 
         # Chatbot response for text input
         if prompt := st.chat_input("Upload an image or say something..."):
