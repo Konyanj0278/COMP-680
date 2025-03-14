@@ -22,8 +22,11 @@ To set up and run the project locally, follow these steps:
    ```sh
    pip install -r requirements.txt
    ```
-
-3. Run the application:
+3. Run the following Python command for starting an SMTP server locally.
+   ```sh
+   python -m aiosmtpd -n
+   ```
+4. Run the application, using a new terminal:
    ```sh
    streamlit run app.py
    ```
