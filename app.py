@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
-from streamlit_login_auth_ui.widgets import __login__
 from src.model import ImageClassification
 import plotly.express as px
 from PIL import Image
@@ -47,7 +46,7 @@ if LOGGED_IN:
     # Make Radio buttons horizontal
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
-
+    # Cache the image classifier to improve loading speed
     @st.cache_resource
     def load_image_classifier():
         return ImageClassification()
@@ -60,9 +59,15 @@ if LOGGED_IN:
                         menu_icon="robot",
                         options=["Welcome!",
                                     "Image Classification",
+                                    "Object Detection",
+                                    "Optical Character Recognition",
+                                    "Hand Gesture Recognition",
                                     "Chatbot"],
                         icons=["house-door",
                                 "search",
+                                "bounding-box",
+                                "file-earmark-text",
+                                "hand-index-thumb",
                                 "chat"],
                         default_index=0,
                         )
@@ -98,6 +103,7 @@ if LOGGED_IN:
 
                 )
 
+    # Image Classification Page
     elif page == 'Image Classification':
 
         # Page info display
@@ -131,6 +137,28 @@ if LOGGED_IN:
                 st.download_button('Download Predictions',csv,
                                 file_name='classification_predictions.csv')
                 
+    # Object Detection Page
+    elif page == "Object Detection":
+        st.header("Object Detection")
+        st.info("UI placeholder for object detection. Upload an image functionality below.")
+        uploaded_image = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
+        if uploaded_image:
+            st.image(uploaded_image, caption="Uploaded image.")
+    
+    # Optical Character Recognition Page
+    elif page == "Optical Character Recognition":
+        st.header("Optical Character Recognition")
+        st.info("UI placeholder for OCR. Upload an image functionality below.")
+        uploaded_image = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
+        if uploaded_image:
+            st.image(Image.open(uploaded_image), caption="Uploaded image.")
+
+    # Hand Gesture Recognition Page
+    elif page == "Hand Gesture Recognition":
+        st.header("Hand Gesture Recognition")
+        st.info("UI placeholder for hand gesture recognition. Upload an image functionality below.")
+
+    # Chatbot Page   
     elif page == "Chatbot":
 
         st.header("Chatbot")
