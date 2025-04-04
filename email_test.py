@@ -2,7 +2,7 @@ import smtplib
 
 SERVER = "localhost"
 LOGIN = "jkonyan@mail.thesis.lan"
-PASSWORD = "asus6870"
+PASSWORD = "Password"
 
 FROM = "jkonyan@mail.thesis.lan"
 TO = ["test@mail.thesis.lan"] # must be a list
