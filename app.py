@@ -7,6 +7,11 @@ import plotly.express as px
 from PIL import Image
 import random
 import time
+from ultralytics import YOLO
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
+import av
+import cv2
+import numpy as np
 
 
 # 🔐 Initialize Login System
@@ -60,7 +65,8 @@ if LOGGED_IN:
                         menu_icon="robot",
                         options=["Welcome!",
                                     "Image Classification",
-                                    "Chatbot"],
+                                    "Chatbot",
+                                    "Computer Vision"],
                         icons=["house-door",
                                 "search",
                                 "chat"],
@@ -191,3 +197,69 @@ if LOGGED_IN:
             with st.chat_message("assistant"):
                 response = st.write_stream(response_generator())
             st.session_state.messages.append({"role": "assistant", "content": response})
+            
+    elif page == "Computer Vision":
+        st.header("🧠 Computer Vision")
+        st.subheader("📷 Object Detection using YOLOv8")
+
+        from ultralytics import YOLO
+        import numpy as np
+        import cv2
+        from PIL import Image
+        from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, ClientSettings
+
+
+        # File upload
+        uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+        if uploaded_file:
+            # Load image
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Original Image", use_column_width=True)
+
+            # Convert PIL image to numpy array
+            img_array = np.array(image)
+
+            # Load YOLOv8n model (small, fast, downloads first time)
+            model = YOLO("yolov8n.pt")
+
+            # Run object detection
+            st.write("Running YOLO object detection...")
+            results = model(img_array)
+
+            # Get annotated image
+            annotated_img = results[0].plot()
+
+            # Show result
+            st.image(annotated_img, caption="Detected Objects", use_column_width=True)
+            
+        # ---- WEBCAM OBJECT DETECTION BLOCK ----
+        model = YOLO("yolov8n.pt")  # load once
+
+        st.subheader("🎥 Real-time Object Detection via Webcam")
+
+        class VideoProcessor(VideoTransformerBase):
+            def transform(self, frame):
+                # Get webcam frame as ndarray
+                img = frame.to_ndarray(format="bgr24")
+                
+                # Run YOLO on frame
+                results = model(img)
+                
+                # Plot the annotated results
+                annotated_frame = results[0].plot()
+
+                # Convert NumPy array back to video frame
+                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
+            
+        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
+
+
+        # Streamlit UI block to start webcam
+        webrtc_streamer(
+            key="webcam",
+            mode=WebRtcMode.SENDRECV,
+            video_transformer_factory=VideoProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
