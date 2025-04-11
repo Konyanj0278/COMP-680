@@ -215,7 +215,7 @@ if LOGGED_IN:
         if uploaded_file:
             # Load image
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Original Image", use_column_width=True)
+            st.image(image, caption="Original Image", use_container_width=True)
 
             # Convert PIL image to numpy array
             img_array = np.array(image)
@@ -231,7 +231,7 @@ if LOGGED_IN:
             annotated_img = results[0].plot()
 
             # Show result
-            st.image(annotated_img, caption="Detected Objects", use_column_width=True)
+            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
             
         # ---- WEBCAM OBJECT DETECTION BLOCK ----
         model = YOLO("yolov8n.pt")  # load once
