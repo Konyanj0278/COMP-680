@@ -183,25 +183,40 @@ if LOGGED_IN:
                         st.caption(timestamp)  # Display timestamp as a caption
                     if message["role"] == "user" and "image" in message:
                         st.image(message["image"], caption="Uploaded an image.")
+                    elif message["role"] == "assistant" and "image" in message:
+                        st.image(message["image"], caption="Detected Objects", use_container_width=True)
 
         if submitted and file is not None:
             timestamp = get_formatted_timestamp()  # Generate formatted timestamp
+            # Append the user's uploaded image to the chat history
             st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file, "timestamp": timestamp})
             with st.chat_message("user"):
                 st.image(file, caption="Uploaded an image.")
                 st.caption(timestamp)  # Display timestamp as a caption
+
             # Chatbot response for image upload
             timestamp = get_formatted_timestamp()  # Generate formatted timestamp
             st.session_state.messages.append({"role": "assistant", "content": "Processing image...", "timestamp": timestamp})
             with st.chat_message("assistant"):
                 st.markdown("Processing image...")
                 st.caption(timestamp)  # Display timestamp as a caption
+
                 # YOLO-based image classification
                 image = Image.open(file).convert("RGB")
                 img_array = np.array(image)
                 model = YOLO("yolov8n.pt")
                 results = model(img_array)
                 annotated_img = results[0].plot()
+
+                # Append the classification results to the chat history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": "Here are the detected objects:",
+                    "image": annotated_img,
+                    "timestamp": get_formatted_timestamp()
+                })
+
+                # Display the classification results
                 st.image(annotated_img, caption="Detected Objects", use_container_width=True)
 
         # Chatbot response for text input
