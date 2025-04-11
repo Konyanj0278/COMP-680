@@ -10,6 +10,12 @@ from src.image_optical_character_recgonition import ImageOpticalCharacterRecogni
 from PIL import Image
 import random
 import time
+from ultralytics import YOLO
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
+import av
+import cv2
+import numpy as np
+from datetime import datetime  # Add this import for timestamps
 
 
 # 🔐 Initialize Login System
@@ -63,7 +69,8 @@ if LOGGED_IN:
                         menu_icon="robot",
                         options=["Welcome!",
                                     "Image Classification",
-                                    "Chatbot"],
+                                    "Chatbot",
+                                    "Computer Vision"],
                         icons=["house-door",
                                 "search",
                                 "chat"],
@@ -180,62 +187,182 @@ if LOGGED_IN:
                                 file_name='classification_predictions.csv')
                 
     elif page == "Chatbot":
-
         st.header("Chatbot")
 
-        # File uploader form
-        with st.form("my-form", clear_on_submit=True):
-            file = st.file_uploader("Upload an image to classify...", type=["jpg", "jpeg", "png"])
-            submitted = st.form_submit_button("UPLOAD!")
+        # Helper function to format timestamps
+        def get_formatted_timestamp():
+            return datetime.now().strftime("%I:%M %p")  # 12-hour format without date
 
-        # Streamed response emulator
-        def response_generator():
-            response = random.choice(
-                [
-                    "Hello there! Do you have an image that I can classify?",
-                    "Hi! Is there an image I can help you with?",
-                    "Upload an image and I can help you with that!",
-                    "I'm here to help! Just upload an image.",
-                    "Need assistance with an image?",
-                    "I'm ready to classify an image for you!",
-                    "What's up! I can help you with image classification."
-                ]
-            )
-            for word in response.split():
-                yield word + " "
-                time.sleep(0.05)
+        # Cache model once
+        @st.cache_resource
+        def load_yolo_model():
+            return YOLO("yolov8n.pt")
 
-        # Initialize chat history
+        model = load_yolo_model()
+
+        # Chat history state init
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # Display chat messages from history on app rerun
+        # Display chat history
         with st.container():
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
+                    if "timestamp" in message:
+                        st.caption(message["timestamp"])
                     if message["role"] == "user" and "image" in message:
-                        st.image(message["image"], caption="Uploaded an image.")
+                        st.image(message["image"], caption="Uploaded an image.", use_container_width=True)
+                    elif message["role"] == "assistant" and "image" in message:
+                        st.image(message["image"], caption="Detected Objects", use_container_width=True)
 
-        if submitted and file is not None:
-            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
-            with st.chat_message("user"):
-                st.image(file, caption="Uploaded an image.")
-            # Chatbot response for image upload
-            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
-            with st.chat_message("assistant"):
-                st.markdown("Processing image...")
-                # The classifier is defined as a global var 
-                preds = image_classifier.classify(file)
-                st.write(preds)
+        st.divider()
 
-        # Chatbot response for text input
-        if prompt := st.chat_input("Upload an image or say something..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+        # Chat Input Handling
+        with st.container():
+            if prompt := st.chat_input("Upload an image or say something..."):
+                user_timestamp = get_formatted_timestamp()
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": prompt,
+                    "timestamp": user_timestamp
+                })
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                    st.caption(user_timestamp)
 
-            # Chat random response
-            with st.chat_message("assistant"):
-                response = st.write_stream(response_generator())
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                # Stream assistant response manually
+                with st.chat_message("assistant"):
+                    response = random.choice([
+                        "Hello there! Do you have an image that I can classify?",
+                        "Hi! Is there an image I can help you with?",
+                        "Upload an image and I can help you with that!",
+                        "I'm here to help! Just upload an image.",
+                        "Need assistance with an image?",
+                        "I'm ready to classify an image for you!",
+                        "What's up! I can help you with image classification."
+                    ])
+                    st.markdown(response)
+                    bot_timestamp = get_formatted_timestamp()
+                    st.caption(bot_timestamp)
+
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": response.strip(),
+                    "timestamp": bot_timestamp
+                })
+                st.rerun()
+
+            # Image uploader block
+            with st.form("my-form", clear_on_submit=True):
+                file = st.file_uploader("Choose image...", type=["jpg", "jpeg", "png"])
+                submitted = st.form_submit_button("SUBMIT")
+
+            if submitted and file is not None:
+                # Save user image message
+                timestamp = get_formatted_timestamp()
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": "Uploaded an image.",
+                    "image": file,
+                    "timestamp": timestamp
+                })
+                with st.chat_message("user"):
+                    st.image(file, caption="Uploaded an image.", use_container_width=True)
+                    st.caption(timestamp)
+
+                # Assistant: Processing response
+                with st.chat_message("assistant"):
+                    processing_time = get_formatted_timestamp()
+                    st.markdown("Processing image...")
+                    st.caption(processing_time)
+
+                    # Process image with YOLO
+                    image = Image.open(file).convert("RGB")
+                    img_array = np.array(image)
+                    results = model(img_array)
+                    annotated_img = results[0].plot()
+
+                    # Show result
+                    st.markdown("Here are the detected objects:")
+                    st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+                    result_time = get_formatted_timestamp()
+                    st.caption(result_time)
+
+                # Append result message to state
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": "Here are the detected objects:",
+                    "image": annotated_img,
+                    "timestamp": result_time
+                })
+                st.rerun()
+
+        
+            
+            
+    elif page == "Computer Vision":
+        st.header("🧠 Computer Vision")
+        st.subheader("📷 Object Detection using YOLOv8")
+
+        from ultralytics import YOLO
+        import numpy as np
+        import cv2
+        from PIL import Image
+        from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, ClientSettings
+
+
+        # File upload
+        uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+        if uploaded_file:
+            # Load image
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Original Image", use_container_width=True)
+
+            # Convert PIL image to numpy array
+            img_array = np.array(image)
+
+            # Load YOLOv8n model (small, fast, downloads first time)
+            model = YOLO("yolov8n.pt")
+
+            # Run object detection
+            st.write("Running YOLO object detection...")
+            results = model(img_array)
+
+            # Get annotated image
+            annotated_img = results[0].plot()
+
+            # Show result
+            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+            
+        # ---- WEBCAM OBJECT DETECTION BLOCK ----
+        model = YOLO("yolov8n.pt")  # load once
+
+        st.subheader("🎥 Real-time Object Detection via Webcam")
+
+        class VideoProcessor(VideoTransformerBase):
+            def transform(self, frame):
+                # Get webcam frame as ndarray
+                img = frame.to_ndarray(format="bgr24")
+                
+                # Run YOLO on frame
+                results = model(img)
+                
+                # Plot the annotated results
+                annotated_frame = results[0].plot()
+
+                # Convert NumPy array back to video frame
+                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
+            
+        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
+
+
+        # Streamlit UI block to start webcam
+        webrtc_streamer(
+            key="webcam",
+            mode=WebRtcMode.SENDRECV,
+            video_transformer_factory=VideoProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
