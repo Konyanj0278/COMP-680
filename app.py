@@ -12,6 +12,7 @@ from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import av
 import cv2
 import numpy as np
+from datetime import datetime  # Add this import for timestamps
 
 
 # 🔐 Initialize Login System
@@ -141,6 +142,10 @@ if LOGGED_IN:
 
         st.header("Chatbot")
 
+        # Helper function to format timestamps
+        def get_formatted_timestamp():
+            return datetime.now().strftime("%I:%M %p")  # 12-hour format without date
+
         # File uploader form
         with st.form("my-form", clear_on_submit=True):
             file = st.file_uploader("Choose image...", type=["jpg", "jpeg", "png"])
@@ -162,6 +167,7 @@ if LOGGED_IN:
             for word in response.split():
                 yield word + " "
                 time.sleep(0.05)
+            st.session_state.messages[-1]["timestamp"] = get_formatted_timestamp()  # Add timestamp to the last response
 
         # Initialize chat history
         if "messages" not in st.session_state:
@@ -172,17 +178,24 @@ if LOGGED_IN:
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
+                    timestamp = message.get("timestamp", "")  # Retrieve timestamp if available
+                    if timestamp:
+                        st.caption(timestamp)  # Display timestamp as a caption
                     if message["role"] == "user" and "image" in message:
                         st.image(message["image"], caption="Uploaded an image.")
 
         if submitted and file is not None:
-            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
+            timestamp = get_formatted_timestamp()  # Generate formatted timestamp
+            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file, "timestamp": timestamp})
             with st.chat_message("user"):
                 st.image(file, caption="Uploaded an image.")
+                st.caption(timestamp)  # Display timestamp as a caption
             # Chatbot response for image upload
-            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
+            timestamp = get_formatted_timestamp()  # Generate formatted timestamp
+            st.session_state.messages.append({"role": "assistant", "content": "Processing image...", "timestamp": timestamp})
             with st.chat_message("assistant"):
                 st.markdown("Processing image...")
+                st.caption(timestamp)  # Display timestamp as a caption
                 # YOLO-based image classification
                 image = Image.open(file).convert("RGB")
                 img_array = np.array(image)
@@ -193,14 +206,18 @@ if LOGGED_IN:
 
         # Chatbot response for text input
         if prompt := st.chat_input("Upload an image or say something..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
+            timestamp = get_formatted_timestamp()  # Generate formatted timestamp
+            st.session_state.messages.append({"role": "user", "content": prompt, "timestamp": timestamp})
             with st.chat_message("user"):
                 st.markdown(prompt)
+                st.caption(timestamp)  # Display timestamp as a caption
 
             # Chat random response
             with st.chat_message("assistant"):
                 response = st.write_stream(response_generator())
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                timestamp = get_formatted_timestamp()  # Generate formatted timestamp
+                st.caption(timestamp)  # Display timestamp as a caption
+            st.session_state.messages.append({"role": "assistant", "content": response, "timestamp": timestamp})
             
     elif page == "Computer Vision":
         st.header("🧠 Computer Vision")
