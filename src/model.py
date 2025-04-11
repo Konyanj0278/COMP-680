@@ -1,30 +1,49 @@
-from transformers import AutoFeatureExtractor, ResNetForImageClassification
+import timm
+import torch
+from torchvision import transforms
 import pandas as pd
-import numpy as np
-from torch.nn import Softmax as softmax
+from PIL import Image
+import requests
 
 
 class ImageClassification:
-
-
     def __init__(self):
+        # Load EfficientNet-B7 (pretrained on ImageNet)
+        self.model = timm.create_model("tf_efficientnet_b7_ns", pretrained=True)
+        self.model.eval()
 
+        # Load official ImageNet class labels from URL
+        self.labels = self._load_labels()
 
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
-        self.model = ResNetForImageClassification.from_pretrained("google/vit-base-patch16-224")
+        # Preprocessing to match model 
+        self.transform = transforms.Compose([
+            transforms.Resize((600, 600)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+        ])
 
-    def classify(self, image):
+    def _load_labels(self):
+        # Pulls 1000 ImageNet class names
+        url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
+        response = requests.get(url)
+        return response.text.strip().split("\n")
 
-        inputs = self.feature_extractor(images=image, return_tensors="pt")
-        outputs = self.model(**inputs)
-        pred_probs = softmax(dim=1)(outputs.logits)
+    def classify(self, image: Image.Image):
+        # Transform image for the model
+        image_tensor = self.transform(image).unsqueeze(0)
 
-        predictions = pd.DataFrame(columns=['Class', 'Pred_Prob'])
-        for i in range(1, 4):
-            predicted_class_idx = np.argsort(np.max(pred_probs.cpu().detach().numpy(), axis=0))[-i]
-            predicted_class_pred_prob = float(pred_probs[(0, predicted_class_idx)].detach().numpy())
-            predicted_class_name = self.model.config.id2label[predicted_class_idx]
-            new_row = pd.DataFrame([{'Class': predicted_class_name, 'Pred_Prob': predicted_class_pred_prob}])
-            predictions = pd.concat([predictions, new_row], ignore_index=True)
+        with torch.no_grad():
+            outputs = self.model(image_tensor)
+            probs = torch.nn.functional.softmax(outputs[0], dim=0)
+
+        # Get top 3 predictions
+        top_probs, top_idxs = torch.topk(probs, 3)
+
+        # Wrap results as a dataframe
+        predictions = pd.DataFrame([{
+            'Class': self.labels[idx],
+            'Pred_Prob': float(prob)
+        } for idx, prob in zip(top_idxs, top_probs)])
 
         return predictions

@@ -12,7 +12,9 @@ from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import av
 import cv2
 import numpy as np
+import torch
 
+torch._classes = {}  # prevent torch class lookup errors
 
 # 🔐 Initialize Login System
 __login__obj = __login__(
@@ -138,7 +140,6 @@ if LOGGED_IN:
                                 file_name='classification_predictions.csv')
                 
     elif page == "Chatbot":
-
         st.header("Chatbot")
 
         # File uploader form
@@ -172,20 +173,40 @@ if LOGGED_IN:
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
-                    if message["role"] == "user" and "image" in message:
-                        st.image(message["image"], caption="Uploaded an image.")
+                    if message.get("image") is not None:
+                        st.image(message["image"], caption="Uploaded image.")
 
+        # Image upload handling
         if submitted and file is not None:
-            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
-            with st.chat_message("user"):
-                st.image(file, caption="Uploaded an image.")
-            # Chatbot response for image upload
-            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
-            with st.chat_message("assistant"):
-                st.markdown("Processing image...")
-                # The classifier is defined as a global var 
-                preds = image_classifier.classify(file)
-                st.write(preds)
+            try:
+                img = Image.open(file).convert("RGB")
+            except Exception as e:
+                st.error("Invalid image format. Please upload a valid image.")
+            else:
+                #Append user message
+                st.session_state.messages.append({
+                    "role": "user", 
+                    "content": "Uploaded an image for classification.",
+                    "image": file
+                })
+
+                with st.chat_message("user"):
+                    st.image(file, caption="Uploaded image.")
+                
+                # Assistant process image
+                with st.chat_message("assistant"):
+                    st.markdown("🔍 Processing image...")
+                    preds = image_classifier.classify(img)
+                    st.write(preds)
+
+                    top_class = preds.iloc[0]
+                    response = f"✅ I think this image is most likely a **{top_class['Class']}** with confidence **{top_class['Pred_Prob']:.2f}**."
+                    st.markdown(response)
+
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": f"I think this image is most likely a **{top_class['Class']}** with confidence **{top_class['Pred_Prob']:.2f}**."
+                })
 
         # Chatbot response for text input
         if prompt := st.chat_input("Upload an image or say something..."):
