@@ -143,8 +143,8 @@ if LOGGED_IN:
 
         # File uploader form
         with st.form("my-form", clear_on_submit=True):
-            file = st.file_uploader("Upload an image to classify...", type=["jpg", "jpeg", "png"])
-            submitted = st.form_submit_button("UPLOAD!")
+            file = st.file_uploader("Choose image...", type=["jpg", "jpeg", "png"])
+            submitted = st.form_submit_button("SUBMIT")
 
         # Streamed response emulator
         def response_generator():
@@ -183,9 +183,13 @@ if LOGGED_IN:
             st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
             with st.chat_message("assistant"):
                 st.markdown("Processing image...")
-                # The classifier is defined as a global var 
-                preds = image_classifier.classify(file)
-                st.write(preds)
+                # YOLO-based image classification
+                image = Image.open(file).convert("RGB")
+                img_array = np.array(image)
+                model = YOLO("yolov8n.pt")
+                results = model(img_array)
+                annotated_img = results[0].plot()
+                st.image(annotated_img, caption="Detected Objects", use_container_width=True)
 
         # Chatbot response for text input
         if prompt := st.chat_input("Upload an image or say something..."):
