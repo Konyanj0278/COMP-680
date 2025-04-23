@@ -281,22 +281,39 @@ if LOGGED_IN:
                     image = Image.open(file).convert("RGB")
                     img_array = np.array(image)
                     results = model(img_array)
-                    annotated_img = results[0].plot()
 
-                    # Show result
-                    st.markdown("Here are the detected objects:")
-                    st.image(annotated_img, caption="Detected Objects", use_container_width=True)
-                    result_time = get_formatted_timestamp()
-                    st.caption(result_time)
+                    # Check if any objects were detected
+                    if len(results[0].boxes) > 0:
+                        # Get annotated image
+                        annotated_img = results[0].plot()
 
-                # Append result message to state
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": "Here are the detected objects:",
-                    "image": annotated_img,
-                    "timestamp": result_time
-                })
-                st.rerun()
+                        # Show result
+                        st.markdown("Here are the detected objects:")
+                        st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+                        result_time = get_formatted_timestamp()
+                        st.caption(result_time)
+
+                        # Append result message to state
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": "Here are the detected objects:",
+                            "image": annotated_img,
+                            "timestamp": result_time
+                        })
+                    else:
+                        # No objects detected
+                        st.markdown("Unable to classify image. Try another image.")
+                        result_time = get_formatted_timestamp()
+                        st.caption(result_time)
+
+                        # Append result message to state
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": "Unable to classify image. Try another image.",
+                            "timestamp": result_time
+                        })
+
+                    st.rerun()
 
         
             
