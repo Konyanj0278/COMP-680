@@ -17,84 +17,50 @@ import cv2
 import numpy as np
 from datetime import datetime  # Add this import for timestamps
 
+# Load custom modules
+from screens import welcome, image_classification, chatbot, computer_vision
 
-# 🔐 Initialize Login System
+# Login Setup
 __login__obj = __login__(
-    auth_token="your_courier_auth_token",  # Replace this with your actual Courier API key
+    auth_token="your_courier_auth_token",        
     company_name="Deep Net",
     width=200,
     height=250,
     logout_button_name="Logout",
     hide_menu_bool=False,
-    hide_footer_bool=False,
-
+    hide_footer_bool=False
 )
 
-# Check if user is logged in
 LOGGED_IN = __login__obj.build_login_ui()
 
+# Authenticated Flow
 if LOGGED_IN:
     st.success("Welcome! You are logged in.")
-
-
-    # Hide warnings to make it easier to locate
-    # errors in logs, should they show up
-    import warnings
-    warnings.filterwarnings("ignore")
-
-
-
-    # Hide Streamlit logo
-    hide_streamlit_style = """
-                <style>
-                #MainMenu {visibility: hidden;}
-                footer {visibility: hidden;}
-                </style>
-                """
-    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-    # Make Radio buttons horizontal
+    st.markdown("""<style>#MainMenu {visibility: hidden;} footer {visibility: hidden;}</style>""", unsafe_allow_html=True)
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
-
+    # Load models once
     @st.cache_resource
-    def load_image_classifier():
-        return ImageClassification()
+    def load_models():
+        return ImageClassification(), YOLO("yolov8n.pt")
 
-    image_classifier = load_image_classifier()
+    image_classifier, yolo_model = load_models()
 
-    # Create streamlit sidebar with options for different tasks
+    # Sidebar Navigation
     with st.sidebar:
-        page = option_menu(menu_title='Menu',
-                        menu_icon="robot",
-                        options=["Welcome!",
-                                    "Image Classification",
-                                    "Chatbot",
-                                    "Computer Vision"],
-                        icons=["house-door",
-                                "search",
-                                "chat"],
-                        default_index=0,
-                        )
-
-        # Make sidebar slightly larger to accommodate larger names
-        st.markdown(
-            """
-            <style>
-            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-                width: 350px;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
+        page = option_menu(
+            menu_title='Menu',
+            options=["Welcome!", "Image Classification", "Chatbot", "Computer Vision"],
+            icons=["house-door", "search", "chat", "camera"],
+            menu_icon="robot",
+            default_index=0
         )
 
+    st.title("Deep Net")
 
-    st.title('Deep Net')
-
-
-    # Page Definitions
+    # Page Routing
     if page == "Welcome!":
+
 
 
 
