@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 from PIL import Image
 import torch
-from object_detection_utils import visualize_prediction
+from src.object_detection_utils import visualize_prediction
 
 class ImageObjectDetection:
     """
@@ -16,15 +16,17 @@ class ImageObjectDetection:
         """
         self.model = YOLO('yolov8n.pt')  # Load YOLOv8 model
 
-    def classify(self, image):
+    def classify(self, image, confidence_threshold=0.5):
         """
         Detect objects in image using YOLOv8.
 
         Parameters:
-            image (PIL image): image to detect objects in
+            image (PIL image): Image to detect objects in
+            confidence_threshold (float): Minimum confidence score to consider a prediction valid
+
         Returns:
-            viz_img (PIL Image): annotated image with predictions
-            filtered_preds (dict): predictions for object detection
+            viz_img (PIL Image): Annotated image with predictions
+            filtered_preds (list): Filtered predictions for object detection
         """
         # Perform inference
         results = self.model(image)
@@ -37,11 +39,22 @@ class ImageObjectDetection:
         # Convert labels to class names
         labels = [self.model.names[int(label)] for label in labels]
 
-        # Format predictions for visualization
+        # Filter predictions based on confidence threshold
+        filtered_boxes = []
+        filtered_scores = []
+        filtered_labels = []
+
+        for box, score, label in zip(boxes, scores, labels):
+            if score >= confidence_threshold:
+                filtered_boxes.append(box)
+                filtered_scores.append(score)
+                filtered_labels.append(label)
+
+        # Format filtered predictions for visualization
         output_dict = {
-            "boxes": torch.tensor(boxes),
-            "scores": torch.tensor(scores),
-            "labels": torch.tensor(labels),
+            "boxes": torch.tensor(filtered_boxes),
+            "scores": torch.tensor(filtered_scores),
+            "labels": filtered_labels,  # Labels are already strings
         }
 
         # Draw predictions on raw image

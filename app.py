@@ -7,13 +7,20 @@ import plotly.express as px
 from src.image_object_detection import ImageObjectDetection
 from src.model import ImageClassification
 from src.image_optical_character_recgonition import ImageOpticalCharacterRecognition
-
 from PIL import Image
 import random
 import time
+from ultralytics import YOLO
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
+import av
+import cv2
+import numpy as np
+from datetime import datetime  # Add this import for timestamps
 
+# Load custom modules
+from screens import welcome, image_classification, chatbot, computer_vision
 
-# 🔐 Initialize Login System
+# Login Setup
 __login__obj = __login__(
     auth_token="your_courier_auth_token",  # Replace this with your actual Courier API key
     company_name="Deep Net",
@@ -29,6 +36,7 @@ __login__obj = __login__(
 LOGGED_IN = __login__obj.build_login_ui()
 
 if LOGGED_IN:
+    
     st.success("Welcome! You are logged in.")
 
 
@@ -60,35 +68,19 @@ if LOGGED_IN:
 
     # Create streamlit sidebar with options for different tasks
     with st.sidebar:
-        page = option_menu(menu_title='Menu',
-                        menu_icon="robot",
-                        options=["Welcome!",
-                                    "Image Classification",
-                                    "Chatbot"],
-                        icons=["house-door",
-                                "search",
-                                "chat"],
-                        default_index=0,
-                        )
-
-        # Make sidebar slightly larger to accommodate larger names
-        st.markdown(
-            """
-            <style>
-            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-                width: 350px;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
+        page = option_menu(
+            menu_title='Menu',
+            options=["Welcome!", "Image Classification", "Chatbot", "Computer Vision"],
+            icons=["house-door", "search", "chat", "camera"],
+            menu_icon="robot",
+            default_index=0
         )
 
+    st.title("Deep Net")
 
-    st.title('Deep Net')
-
-
-    # Page Definitions
+    # Page Routing
     if page == "Welcome!":
+
 
 
 
@@ -97,30 +89,43 @@ if LOGGED_IN:
 
         st.subheader("Introduction")
         st.write("""
-        This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements, such as hiding the Streamlit logo and adjusting sidebar width, ensure a smoother user experience.
-            """
+            This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. 
+            It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples.
 
-                )
+            The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements ensure a smoother user experience.
+        """)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
     elif page == "Object Detection":
         st.header('Object Detection')
-        st.markdown("![Alt Text](https://media.giphy.com/media/vAvWgk3NCFXTa/giphy.gif)")
-        st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection. Try it out!")
+        st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection.")
 
         # User selected option for data type
         data_type = st.radio(
             "Select Data Type",
-            ('Webcam', 'Video', 'Image'))
+            ('Webcam', 'Video', 'Image')
+        )
 
         if data_type == 'Image':
             input_type = st.radio(
                 "Use example or upload your own?",
-                ('Example', 'Upload'))
+                ('Example', 'Upload')
+            )
+
+            # Define example images
+            image_examples = {
+                'Home Office': 'path/to/home_office.jpg',
+                'Traffic': 'path/to/traffic.jpg',
+                'Barbeque': 'path/to/barbeque.jpg'
+            }
 
             # Load in example or uploaded image
             if input_type == 'Example':
                 option = st.selectbox(
                     'Which example would you like to use?',
-                    ('Home Office', 'Traffic', 'Barbeque'))
+                    ('Home Office', 'Traffic', 'Barbeque')
+                )
                 uploaded_file = image_examples[option]
             else:
                 uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
@@ -132,10 +137,15 @@ if LOGGED_IN:
                 else:
                     with st.spinner("Running object detection..."):
                         img = Image.open(uploaded_file)
-                        image_object_detection = load_image_object_detection()
+                        image_object_detection = ImageObjectDetection()
                         labeled_image, detections = image_object_detection.classify(img)
 
-                    if labeled_image and detections:
+                        # Filter detections based on confidence threshold
+                        filtered_detections = [
+                            det for det in detections if det['score'] >= confidence_threshold
+                        ]
+
+                    if labeled_image and filtered_detections:
                         buf = BytesIO()
                         labeled_image.save(buf, format="PNG")
                         byte_im = buf.getvalue()
@@ -144,42 +154,40 @@ if LOGGED_IN:
                         st.image(labeled_image)
                         st.download_button('Download Image', data=byte_im, file_name="image_object_detection.png", mime="image/jpeg")
 
-                        st.json(detections)
-                        st.download_button('Download Predictions', json.dumps(detections), file_name='image_object_detection.json')
+                        st.json(filtered_detections)
+                        st.download_button('Download Predictions', json.dumps(filtered_detections), file_name='image_object_detection.json')
 
     elif page == 'Image Classification':
-
-        # Page info display
         st.header('Image Classification')
+
         # User selected option for data type
         input_type = st.radio(
             "Use example or upload your own?",
-            ('Example', 'Upload'))
+            ('Example', 'Upload')
+        )
 
         uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
 
         if st.button('Submit!'):
-            # Throw error if there is no file
             if uploaded_file is None:
                 st.error("No file uploaded yet.")
             else:
-                # Run classification
                 with st.spinner("Running classification..."):
                     img = Image.open(uploaded_file)
                     preds = image_classifier.classify(img)
 
-                # Display image
+                    # Filter predictions based on confidence threshold
+                    filtered_preds = preds[preds['Pred_Prob'] >= confidence_threshold]
+
                 st.subheader("Classification Predictions")
                 st.image(img)
-                fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
+                fig = px.bar(filtered_preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
                 st.write(fig)
 
                 # Provide download option for predictions
-                st.write("")
-                csv = preds.to_csv(index=False).encode('utf-8')
-                st.download_button('Download Predictions',csv,
-                                file_name='classification_predictions.csv')
-                
+                csv = filtered_preds.to_csv(index=False).encode('utf-8')
+                st.download_button('Download Predictions', csv, file_name='classification_predictions.csv')
+
     elif page == "Chatbot":
 
         st.header("Chatbot")
@@ -218,25 +226,111 @@ if LOGGED_IN:
                     if message["role"] == "user" and "image" in message:
                         st.image(message["image"], caption="Uploaded an image.")
 
-        if submitted and file is not None:
-            st.session_state.messages.append({"role": "user", "content": "Uploaded an image.", "image": file})
-            with st.chat_message("user"):
-                st.image(file, caption="Uploaded an image.")
-            # Chatbot response for image upload
-            st.session_state.messages.append({"role": "assistant", "content": "Processing image..."})
-            with st.chat_message("assistant"):
-                st.markdown("Processing image...")
-                # The classifier is defined as a global var 
-                preds = image_classifier.classify(file)
-                st.write(preds)
+            if submitted and file is not None:
+                # Save user image message
+                timestamp = get_formatted_timestamp()
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": "Uploaded an image.",
+                    "image": file,
+                    "timestamp": timestamp
+                })
+                with st.chat_message("user"):
+                    st.image(file, caption="Uploaded an image.", use_container_width=True)
+                    st.caption(timestamp)
 
-        # Chatbot response for text input
-        if prompt := st.chat_input("Upload an image or say something..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+                # Assistant: Processing response
+                with st.chat_message("assistant"):
+                    processing_time = get_formatted_timestamp()
+                    st.markdown("Processing image...")
+                    st.caption(processing_time)
 
-            # Chat random response
-            with st.chat_message("assistant"):
-                response = st.write_stream(response_generator())
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                    # Process image with YOLO
+                    image = Image.open(file).convert("RGB")
+                    img_array = np.array(image)
+                    results = model(img_array)
+                    annotated_img = results[0].plot()
+
+                    # Show result
+                    st.markdown("Here are the detected objects:")
+                    st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+                    result_time = get_formatted_timestamp()
+                    st.caption(result_time)
+
+                # Append result message to state
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": "Here are the detected objects:",
+                    "image": annotated_img,
+                    "timestamp": result_time
+                })
+                st.rerun()
+
+        
+            
+            
+    elif page == "Computer Vision":
+        st.header("🧠 Computer Vision")
+        st.subheader("📷 Object Detection using YOLOv8")
+
+        from ultralytics import YOLO
+        import numpy as np
+        import cv2
+        from PIL import Image
+        from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, ClientSettings
+
+
+        # File upload
+        uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+        if uploaded_file:
+            # Load image
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Original Image", use_container_width=True)
+
+            # Convert PIL image to numpy array
+            img_array = np.array(image)
+
+            # Load YOLOv8n model (small, fast, downloads first time)
+            model = YOLO("yolov8n.pt")
+
+            # Run object detection
+            st.write("Running YOLO object detection...")
+            results = model(img_array)
+
+            # Get annotated image
+            annotated_img = results[0].plot()
+
+            # Show result
+            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+            
+        # ---- WEBCAM OBJECT DETECTION BLOCK ----
+        model = YOLO("yolov8n.pt")  # load once
+
+        st.subheader("🎥 Real-time Object Detection via Webcam")
+
+        class VideoProcessor(VideoTransformerBase):
+            def transform(self, frame):
+                # Get webcam frame as ndarray
+                img = frame.to_ndarray(format="bgr24")
+                
+                # Run YOLO on frame
+                results = model(img)
+                
+                # Plot the annotated results
+                annotated_frame = results[0].plot()
+
+                # Convert NumPy array back to video frame
+                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
+            
+        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
+
+
+        # Streamlit UI block to start webcam
+        webrtc_streamer(
+            key="webcam",
+            mode=WebRtcMode.SENDRECV,
+            video_transformer_factory=VideoProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
