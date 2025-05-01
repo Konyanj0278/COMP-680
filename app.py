@@ -73,84 +73,122 @@ if LOGGED_IN:
             """
 
                 )
-    elif page == "Object Detection":
-        st.header('Object Detection')
-        st.markdown("![Alt Text](https://media.giphy.com/media/vAvWgk3NCFXTa/giphy.gif)")
-        st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection. Try it out!")
+    # elif page == "Object Detection":
+    #     st.header('Object Detection')
+    #     st.markdown("![Alt Text](https://media.giphy.com/media/vAvWgk3NCFXTa/giphy.gif)")
+    #     st.write("This object detection app uses YOLOv8, a state-of-the-art model for real-time object detection. Try it out!")
 
-        # User selected option for data type
-        data_type = st.radio(
-            "Select Data Type",
-            ('Webcam', 'Video', 'Image'))
+    #     # User selected option for data type
+    #     data_type = st.radio(
+    #         "Select Data Type",
+    #         ('Webcam', 'Video', 'Image'))
 
-        if data_type == 'Image':
-            input_type = st.radio(
-                "Use example or upload your own?",
-                ('Example', 'Upload'))
+    #     if data_type == 'Image':
+    #         input_type = st.radio(
+    #             "Use example or upload your own?",
+    #             ('Example', 'Upload'))
 
-            # Load in example or uploaded image
-            if input_type == 'Example':
-                option = st.selectbox(
-                    'Which example would you like to use?',
-                    ('Home Office', 'Traffic', 'Barbeque'))
-                uploaded_file = image_examples[option]
-            else:
-                uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+    #         # Load in example or uploaded image
+    #         if input_type == 'Example':
+    #             option = st.selectbox(
+    #                 'Which example would you like to use?',
+    #                 ('Home Office', 'Traffic', 'Barbeque'))
+    #             uploaded_file = image_examples[option]
+    #         else:
+    #             uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
 
-            # Run detection and provide download options when user clicks run!
-            if st.button('🔥 Run!'):
-                if uploaded_file is None:
-                    st.error("No file uploaded yet.")
-                else:
-                    with st.spinner("Running object detection..."):
-                        img = Image.open(uploaded_file)
-                        image_object_detection = load_image_object_detection()
-                        labeled_image, detections = image_object_detection.classify(img)
+    #         # Run detection and provide download options when user clicks run!
+    #         if st.button('🔥 Run!'):
+    #             if uploaded_file is None:
+    #                 st.error("No file uploaded yet.")
+    #             else:
+    #                 with st.spinner("Running object detection..."):
+    #                     img = Image.open(uploaded_file)
+    #                     image_object_detection = load_image_object_detection()
+    #                     labeled_image, detections = image_object_detection.classify(img)
 
-                    if labeled_image and detections:
-                        buf = BytesIO()
-                        labeled_image.save(buf, format="PNG")
-                        byte_im = buf.getvalue()
+    #                 if labeled_image and detections:
+    #                     buf = BytesIO()
+    #                     labeled_image.save(buf, format="PNG")
+    #                     byte_im = buf.getvalue()
 
-                        st.subheader("Object Detection Predictions")
-                        st.image(labeled_image)
-                        st.download_button('Download Image', data=byte_im, file_name="image_object_detection.png", mime="image/jpeg")
+    #                     st.subheader("Object Detection Predictions")
+    #                     st.image(labeled_image)
+    #                     st.download_button('Download Image', data=byte_im, file_name="image_object_detection.png", mime="image/jpeg")
 
-                        st.json(detections)
-                        st.download_button('Download Predictions', json.dumps(detections), file_name='image_object_detection.json')
+    #                     st.json(detections)
+    #                     st.download_button('Download Predictions', json.dumps(detections), file_name='image_object_detection.json')
 
     elif page == 'Image Classification':
 
         # Page info display
         st.header('Image Classification')
+
         # User selected option for data type
         input_type = st.radio(
             "Use example or upload your own?",
-            ('Example', 'Upload'))
+            ('Example', 'Upload')
+        )
 
-        uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+        if input_type == 'Example':
+            # Example selection logic
+            example_option = st.selectbox(
+                'Which example would you like to use?',
+                ('Street Sign', 'Dog', 'Barbeque', 'Home Office', 'Car', 'Traffic')
+            )
+            st.write(f"You selected: {example_option}")
 
-        if st.button('Submit!'):
-            # Throw error if there is no file
-            if uploaded_file is None:
-                st.error("No file uploaded yet.")
-            else:
-                # Run classification
-                with st.spinner("Running classification..."):
-                    img = Image.open(uploaded_file)
-                    preds = image_classifier.classify(img)
+            # Load and display the selected example image
+            example_images = {
+                'Street Sign': './examples/Street Sign.jpeg',
+                'Dog': './examples/Dog.jpeg',
+                'Barbeque': './examples/Barbeque.jpeg',
+                'Home Office': './examples/Home Office.jpeg',
+                'Car': './examples/Car.jpeg',
+                'Traffic': './examples/Traffic.jpeg'
+            }
+            example_image_path = example_images[example_option]
+            img = Image.open(example_image_path)
+            st.image(img, caption=f"Example: {example_option}", use_container_width=True)
 
-                # Display image
-                st.subheader("Classification Predictions")
-                st.image(img)
-                fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
-                st.write(fig)
+            # Run classification on the example image
+            with st.spinner("Running classification..."):
+                preds = image_classifier.classify(img)
 
-                # Provide download option for predictions
-                st.write("")
-                csv = preds.to_csv(index=False).encode('utf-8')
-                st.download_button('Download Predictions',csv,
-                                file_name='classification_predictions.csv')
+            # Display predictions
+            st.subheader("Classification Predictions")
+            fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
+            st.write(fig)
+
+            # Provide download option for predictions
+            st.write("")
+            csv = preds.to_csv(index=False).encode('utf-8')
+            st.download_button('Download Predictions', csv, file_name='classification_predictions.csv')
+
+        elif input_type == 'Upload':
+            # Show upload image feature
+            uploaded_file = st.file_uploader("Choose a file", type=['jpg', 'jpeg', 'png'])
+
+            if st.button('Submit!'):
+                # Throw error if there is no file
+                if uploaded_file is None:
+                    st.error("No file uploaded yet.")
+                else:
+                    # Run classification
+                    with st.spinner("Running classification..."):
+                        img = Image.open(uploaded_file)
+                        preds = image_classifier.classify(img)
+
+                    # Display image
+                    st.subheader("Classification Predictions")
+                    st.image(img)
+                    fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
+                    st.write(fig)
+
+                    # Provide download option for predictions
+                    st.write("")
+                    csv = preds.to_csv(index=False).encode('utf-8')
+                    st.download_button('Download Predictions', csv, file_name='classification_predictions.csv')
                 
     elif page == "Chatbot":
         st.header("Chatbot")

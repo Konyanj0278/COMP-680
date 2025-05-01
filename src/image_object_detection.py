@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 from PIL import Image
 import torch
-from object_detection_utils import visualize_prediction
+# from object_detection_utils import visualize_prediction
 
 class ImageObjectDetection:
     """
@@ -45,6 +45,7 @@ class ImageObjectDetection:
         }
 
         # Draw predictions on raw image
-        viz_img, filtered_preds = visualize_prediction(image, output_dict)
+        #viz_img, filtered_preds = visualize_prediction(image, output_dict)
 
-        return viz_img, filtered_preds
+        #return viz_img, filtered_preds
+        return output_dict
