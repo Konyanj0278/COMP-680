@@ -160,6 +160,7 @@ if LOGGED_IN:
             fig = px.bar(preds.sort_values("Pred_Prob", ascending=True), x='Pred_Prob', y='Class', orientation='h')
             st.write(fig)
 
+
             # Provide download option for predictions
             st.write("")
             csv = preds.to_csv(index=False).encode('utf-8')
