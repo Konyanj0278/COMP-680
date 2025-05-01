@@ -1,17 +1,17 @@
 import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
-from streamlit_login_auth_ui.widgets import __login__
 from src.model import ImageClassification
 import plotly.express as px
 from PIL import Image
 import random
 import time
-from ultralytics import YOLO
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import av
-import cv2
+from ultralytics import YOLO
 import numpy as np
+import cv2
+from PIL import Image
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 
 
 # 🔐 Initialize Login System
@@ -200,66 +200,90 @@ if LOGGED_IN:
             
     elif page == "Computer Vision":
         st.header("🧠 Computer Vision")
+
+        # ✅ SECTION 1: IMAGE UPLOAD + OBJECT DETECTION
         st.subheader("📷 Object Detection using YOLOv8")
 
-        from ultralytics import YOLO
-        import numpy as np
-        import cv2
-        from PIL import Image
-        from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, ClientSettings
-
-
-        # File upload
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
         if uploaded_file:
-            # Load image
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Original Image", use_column_width=True)
+            st.image(image, caption="Original Image", use_container_width=True)
 
-            # Convert PIL image to numpy array
             img_array = np.array(image)
+            yolo_model = YOLO("yolov8n.pt")
 
-            # Load YOLOv8n model (small, fast, downloads first time)
-            model = YOLO("yolov8n.pt")
+            with st.spinner("Running YOLO object detection..."):
+                results = yolo_model(img_array)
+                annotated_img = results[0].plot()
 
-            # Run object detection
-            st.write("Running YOLO object detection...")
-            results = model(img_array)
-
-            # Get annotated image
-            annotated_img = results[0].plot()
-
-            # Show result
-            st.image(annotated_img, caption="Detected Objects", use_column_width=True)
+            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
             
-        # ---- WEBCAM OBJECT DETECTION BLOCK ----
-        model = YOLO("yolov8n.pt")  # load once
+        # ✅ SECTION 2: REAL-TIME OBJECT DETECTION USING OPENCV
+        st.subheader("🎥 Real-time Object Detection via Webcam (LOCAL ONLY)")
 
-        st.subheader("🎥 Real-time Object Detection via Webcam")
+        # Load YOLOv8 model once
+        yolo_model = YOLO("yolov8n.pt")
 
-        class VideoProcessor(VideoTransformerBase):
-            def transform(self, frame):
-                # Get webcam frame as ndarray
-                img = frame.to_ndarray(format="bgr24")
-                
-                # Run YOLO on frame
-                results = model(img)
-                
-                # Plot the annotated results
-                annotated_frame = results[0].plot()
+        run_webcam = st.checkbox('Start Webcam')
 
-                # Convert NumPy array back to video frame
-                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
-            
-        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
+        FRAME_WINDOW = st.image([])
 
+        if run_webcam:
+            # Initialize webcam
+            cap = cv2.VideoCapture(0)
 
-        # Streamlit UI block to start webcam
-        webrtc_streamer(
-            key="webcam",
-            mode=WebRtcMode.SENDRECV,
-            video_transformer_factory=VideoProcessor,
-            media_stream_constraints={"video": True, "audio": False},
-            async_processing=True,
-        )
+            if not cap.isOpened():
+                st.error("❌ Could not open webcam. Please check your camera.")
+            else:
+                st.info("✅ Webcam is running. Close the app to release the webcam.")
+
+                while run_webcam:
+                    ret, frame = cap.read()
+                    if not ret:
+                        st.warning("⚠️ Failed to grab frame.")
+                        break
+
+                    # Run YOLO on the frame
+                    results = yolo_model(frame)
+                    annotated_frame = results[0].plot()
+
+                    # Convert for display
+                    annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                    FRAME_WINDOW.image(annotated_frame)
+
+                cap.release()
+
+        # # ✅ SECTION 2: REAL-TIME OBJECT DETECTION VIA WEBCAM
+        # st.subheader("🎥 Real-time Object Detection via Webcam")
+
+        # # ✅ Load YOLOv8 model once
+        # yolo_model = YOLO("yolov8n.pt")
+
+        # class VideoProcessor(VideoTransformerBase):
+        #     def __init__(self):
+        #         self.model = yolo_model
+        #         self.frame_skip = 2  # Skip every 2nd frame for better performance
+        #         self.counter = 0
+
+        #     def transform(self, frame):
+        #         self.counter += 1
+        #         img = frame.to_ndarray(format="bgr24")
+
+        #         if self.counter % self.frame_skip == 0:
+        #             results = self.model(img)
+        #             annotated_img = results[0].plot()
+        #             return av.VideoFrame.from_ndarray(annotated_img, format="bgr24")
+        #         else:
+        #             # Return raw frame (no detection) for smoother video
+        #             return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+        # st.info("👆 Your webcam feed will start below. If it doesn't start, try selecting your camera manually.")
+
+        # webrtc_streamer(
+        #     key="webcam-detection",
+        #     mode=WebRtcMode.SENDRECV,
+        #     video_transformer_factory=VideoProcessor,
+        #     media_stream_constraints={"video": True, "audio": False},
+        #     async_processing=True,
+        # )
