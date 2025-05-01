@@ -1,11 +1,9 @@
 import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_option_menu import option_menu
-from streamlit_login_auth_ui.widgets import __login__
 from src.model import ImageClassification
 import plotly.express as px
 from src.image_object_detection import ImageObjectDetection
-from src.model import ImageClassification
 from src.image_optical_character_recgonition import ImageOpticalCharacterRecognition
 from PIL import Image
 import random
@@ -15,12 +13,14 @@ from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import av
 import cv2
 import numpy as np
-from datetime import datetime  # Add this import for timestamps
-from io import BytesIO  # Import BytesIO for handling in-memory binary streams
-import json  # Import json for handling JSON operations
+from datetime import datetime
+from io import BytesIO
+import json
+from base64 import b64encode
 
 # --- Animated Background Styling ---
-from base64 import b64encode
+with open("assets/background.jpg", "rb") as img_file:
+    img_bytes = img_file.read()
 with open("assets/background.jpg", "rb") as img_file:
     img_bytes = img_file.read()
     encoded = b64encode(img_bytes).decode()
@@ -28,8 +28,8 @@ with open("assets/background.jpg", "rb") as img_file:
 st.markdown(f"""
     <style>
     @keyframes scrollBackground {{
-        0% {{ background-position: 50% 0%; }}
-        100% {{ background-position: 50% 100%; }}
+        0% {{ background-position: 100% 0%; }}
+        100% {{ background-position: 20% 100%; }}
     }}
 
     [data-testid="stAppViewContainer"] {{
@@ -102,8 +102,7 @@ st.markdown(f"""
 
 
 
-# Load custom modules
-from screens import welcome, image_classification, chatbot, computer_vision
+
 
 # Login Setup
 __login__obj = __login__(
@@ -172,14 +171,14 @@ if LOGGED_IN:
             help="Adjust the minimum confidence level for predictions to be displayed."
         )
 
-    st.title("Deep Net")
+    st.title("We Missed you ! 😊")
 
     # --- Welcome page with animation ---
     if page == "Welcome!":
         st.markdown("""
             <style>
             .welcome-title {
-                font-size: 3rem;
+                font-size: 4rem;
                 font-weight: bold;
                 color: white;
                 text-align: center;
@@ -214,15 +213,28 @@ if LOGGED_IN:
         st.markdown('<div class="fade-in-section">', unsafe_allow_html=True)
 
         st.subheader("🚀 Quickstart")
+    
         st.write("Use the navigation tab on the left-hand side to visit different links.")
 
         st.subheader("Introduction")
-        st.write("""
-            This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. 
-            It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples.
+        st.markdown("""
+            <style>
+            .intro-text {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            color: white;
+            text-align: justify;
+            margin-top: 20px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
-            The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements ensure a smoother user experience.
-        """)
+        st.markdown("""
+            <div class="intro-text">
+            This Streamlit-based application provides a user-friendly interface for performing various computer vision tasks, including image classification, optical character recognition (OCR), and hand gesture classification. 
+            It utilizes pre-trained models to analyze images and videos, allowing users to upload their own files or select from built-in examples. The app's sidebar menu offers quick navigation between different functionalities, while optimizations like caching improve performance. Additionally, UI enhancements ensure a smoother user experience.
+            </div>
+        """, unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -355,6 +367,11 @@ if LOGGED_IN:
                     if message["role"] == "user" and "image" in message:
                         st.image(message["image"], caption="Uploaded an image.")
 
+                # Add this function definition at an appropriate location in your code
+                def get_formatted_timestamp():
+                    """Returns the current timestamp in a formatted string."""
+                    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
             if submitted and file is not None:
                 # Save user image message
                 timestamp = get_formatted_timestamp()
@@ -377,6 +394,8 @@ if LOGGED_IN:
                     # Process image with YOLO
                     image = Image.open(file).convert("RGB")
                     img_array = np.array(image)
+                    # Define and load the YOLO model
+                    model = YOLO("yolov8n.pt")  # Load YOLOv8n model
                     results = model(img_array)
                     annotated_img = results[0].plot()
 
