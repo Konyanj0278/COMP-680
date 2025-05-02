@@ -253,37 +253,3 @@ if LOGGED_IN:
                     FRAME_WINDOW.image(annotated_frame)
 
                 cap.release()
-
-        # # ✅ SECTION 2: REAL-TIME OBJECT DETECTION VIA WEBCAM
-        # st.subheader("🎥 Real-time Object Detection via Webcam")
-
-        # # ✅ Load YOLOv8 model once
-        # yolo_model = YOLO("yolov8n.pt")
-
-        # class VideoProcessor(VideoTransformerBase):
-        #     def __init__(self):
-        #         self.model = yolo_model
-        #         self.frame_skip = 2  # Skip every 2nd frame for better performance
-        #         self.counter = 0
-
-        #     def transform(self, frame):
-        #         self.counter += 1
-        #         img = frame.to_ndarray(format="bgr24")
-
-        #         if self.counter % self.frame_skip == 0:
-        #             results = self.model(img)
-        #             annotated_img = results[0].plot()
-        #             return av.VideoFrame.from_ndarray(annotated_img, format="bgr24")
-        #         else:
-        #             # Return raw frame (no detection) for smoother video
-        #             return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-        # st.info("👆 Your webcam feed will start below. If it doesn't start, try selecting your camera manually.")
-
-        # webrtc_streamer(
-        #     key="webcam-detection",
-        #     mode=WebRtcMode.SENDRECV,
-        #     video_transformer_factory=VideoProcessor,
-        #     media_stream_constraints={"video": True, "audio": False},
-        #     async_processing=True,
-        # )
