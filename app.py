@@ -1,8 +1,6 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-
 from login.login import __login__
-
 from src.model import ImageClassification
 import plotly.express as px
 from src.image_object_detection import ImageObjectDetection
@@ -10,11 +8,12 @@ from src.image_optical_character_recgonition import ImageOpticalCharacterRecogni
 from PIL import Image
 import random
 import time
-from ultralytics import YOLO
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 import av
-import cv2
+from ultralytics import YOLO
 import numpy as np
+import cv2
+from PIL import Image
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 
 from datetime import datetime
 from io import BytesIO
@@ -453,44 +452,47 @@ if LOGGED_IN:
 
     elif page == "Computer Vision":
         st.header("🧠 Computer Vision")
+
+        # ✅ SECTION 1: IMAGE UPLOAD + OBJECT DETECTION
         st.subheader("📷 Object Detection using YOLOv8")
 
-        from ultralytics import YOLO
-        import numpy as np
-        import cv2
-        from PIL import Image
-        from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, ClientSettings
-
-
-        # File upload
         uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
         if uploaded_file:
-            # Load image
             image = Image.open(uploaded_file).convert("RGB")
             st.image(image, caption="Original Image", use_container_width=True)
 
-            # Convert PIL image to numpy array
             img_array = np.array(image)
+            yolo_model = YOLO("yolov8n.pt")
 
-            # Load YOLOv8n model (small, fast, downloads first time)
-            model = YOLO("yolov8n.pt")
+            with st.spinner("Running YOLO object detection..."):
+                results = yolo_model(img_array)
+                annotated_img = results[0].plot()
 
-            # Run object detection
-            st.write("Running YOLO object detection...")
-            results = model(img_array)
+            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
+            
+        # ✅ SECTION 2: REAL-TIME OBJECT DETECTION USING OPENCV
+        st.subheader("🎥 Real-time Object Detection via Webcam (LOCAL ONLY)")
 
-            # Get annotated image
-            annotated_img = results[0].plot()
+        # Load YOLOv8 model once
+        yolo_model = YOLO("yolov8n.pt")
 
+        run_webcam = st.checkbox('Start Webcam')
             # Show result
             st.image(annotated_img, caption="Detected Objects", use_container_width=True)
 
         # ---- WEBCAM OBJECT DETECTION BLOCK ----
-        model = YOLO("yolov8n.pt")  # load once
 
-        st.subheader("🎥 Real-time Object Detection via Webcam")
+        FRAME_WINDOW = st.image([])
 
+        if run_webcam:
+            # Initialize webcam
+            cap = cv2.VideoCapture(0)
+
+            if not cap.isOpened():
+                st.error("❌ Could not open webcam. Please check your camera.")
+            else:
+                st.info("✅ Webcam is running. Close the app to release the webcam.")
         class VideoProcessor(VideoTransformerBase):
             def transform(self, frame):
                 # Get webcam frame as ndarray
@@ -507,7 +509,21 @@ if LOGGED_IN:
                 # Convert NumPy array back to video frame
                 return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
+                while run_webcam:
+                    ret, frame = cap.read()
+                    if not ret:
+                        st.warning("⚠️ Failed to grab frame.")
+                        break
 
+                    # Run YOLO on the frame
+                    results = yolo_model(frame)
+                    annotated_frame = results[0].plot()
+
+                    # Convert for display
+                    annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                    FRAME_WINDOW.image(annotated_frame)
+
+                cap.release()
         st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
 
         # Streamlit UI block to start webcam
