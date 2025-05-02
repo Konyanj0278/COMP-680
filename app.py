@@ -471,6 +471,7 @@ if LOGGED_IN:
 
             st.image(annotated_img, caption="Detected Objects", use_container_width=True)
         
+             
         #Webcam     
         # ✅ SECTION 2: Webcam REAL-TIME OBJECT DETECTION USING OPENCV
         st.subheader("🎥 Real-time Object Detection via Webcam (LOCAL ONLY)")
@@ -479,10 +480,6 @@ if LOGGED_IN:
         yolo_model = YOLO("yolov8n.pt")
 
         run_webcam = st.checkbox('Start Webcam')
-            # Show result
-            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
-
-        # ---- WEBCAM OBJECT DETECTION BLOCK ----
 
         FRAME_WINDOW = st.image([])
 
@@ -494,21 +491,6 @@ if LOGGED_IN:
                 st.error("❌ Could not open webcam. Please check your camera.")
             else:
                 st.info("✅ Webcam is running. Close the app to release the webcam.")
-        class VideoProcessor(VideoTransformerBase):
-            def transform(self, frame):
-                # Get webcam frame as ndarray
-                img = frame.to_ndarray(format="bgr24")
-
-
-                # Run YOLO on frame
-                results = model(img)
-
-
-                # Plot the annotated results
-                annotated_frame = results[0].plot()
-
-                # Convert NumPy array back to video frame
-                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
                 while run_webcam:
                     ret, frame = cap.read()
@@ -525,13 +507,3 @@ if LOGGED_IN:
                     FRAME_WINDOW.image(annotated_frame)
 
                 cap.release()
-        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
-
-        # Streamlit UI block to start webcam
-        webrtc_streamer(
-            key="webcam",
-            mode=WebRtcMode.SENDRECV,
-            video_transformer_factory=VideoProcessor,
-            media_stream_constraints={"video": True, "audio": False},
-            async_processing=True,
-        )
