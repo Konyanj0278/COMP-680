@@ -1,4 +1,7 @@
 All notable changes to this project will be documented in this file.
+[0.0.4] - 2025-04-01 - Jack Konyan 
+- Configured new mail handler to use custom SMTP Server
+- Modified login code to no longer user experimental rerun method
 
 [0.0.3] - 2025-03-14 - Jack Konyan 
 - Migrated the login library into the code base
