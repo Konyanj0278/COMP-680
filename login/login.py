@@ -238,7 +238,7 @@ class __login__:
                 st.session_state['LOGGED_IN'] = False
                 self.cookies['__streamlit_login_signup_ui_username__'] = '1c9a923f-fb21-4a91-b3f3-5f18e3f01182'
                 del_logout.empty()
-                st.experimental_rerun()
+                st.rerun()
         
 
     def nav_sidebar(self):
