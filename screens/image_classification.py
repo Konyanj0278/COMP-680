@@ -4,13 +4,12 @@ from PIL import Image
 
 # Image Classification Screen
 # This screen allows users to upload an image and get classification predictions.
-def show(image_classifier):
+def show(image_classifier, threshold):
     st.header("📷 Image Classification")
 
     st.write("Upload an image to classify it using our deep learning model.")
 
     uploaded_file = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png'])
-    threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.5)
 
     if st.button("Run Classification"):
         if uploaded_file is None:

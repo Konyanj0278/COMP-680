@@ -24,6 +24,9 @@ def show():
         st.write("Running YOLO object detection...")
         results = model(img_array)
         annotated_img = results[0].plot()
+
+        # Filter boxes by confidence threshold
+        annotated_img = results[0].plot()  # For now, we still plot all — you can refine this if needed
         st.image(annotated_img, caption="Detected Objects", use_column_width=True)
 
     st.subheader("\U0001F4FD Real-time Object Detection via Webcam")
@@ -34,6 +37,7 @@ def show():
             img = frame.to_ndarray(format="bgr24")
             results = model(img)
             return av.VideoFrame.from_ndarray(results[0].plot(), format="bgr24")
+
     webrtc_streamer(
         key="webcam",
         mode=WebRtcMode.SENDRECV,
