@@ -1,4 +1,11 @@
 import timm
+import torch
+from torchvision import transforms
+import pandas as pd
+from PIL import Image
+import requests
+
+
 from PIL import Image
 import torch
 from torchvision import transforms

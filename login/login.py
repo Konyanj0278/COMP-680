@@ -111,7 +111,7 @@ class __login__:
                         self.cookies['__streamlit_login_signup_ui_username__'] = username
                         self.cookies.save()
                         del_login.empty()
-                        st.experimental_rerun()
+                        st.rerun()  # Rerun the app to reflect the logged-in state
 
 
     def animation(self) -> None:
