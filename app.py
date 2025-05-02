@@ -218,8 +218,9 @@ if LOGGED_IN:
                 annotated_img = results[0].plot()
 
             st.image(annotated_img, caption="Detected Objects", use_container_width=True)
-            
-        # ✅ SECTION 2: REAL-TIME OBJECT DETECTION USING OPENCV
+        
+        #Webcam     
+        # ✅ SECTION 2: Webcam REAL-TIME OBJECT DETECTION USING OPENCV
         st.subheader("🎥 Real-time Object Detection via Webcam (LOCAL ONLY)")
 
         # Load YOLOv8 model once
