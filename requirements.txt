@@ -20,4 +20,6 @@ ipython
 streamlit-login-auth-ui
 aiosmtpd
 argon2-cffi
+beautifulsoup4
+ultralytics
 
