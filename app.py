@@ -149,64 +149,39 @@ if LOGGED_IN:
     elif page == "Chatbot":
         chatbot.show(image_classifier, yolo_model)
     elif page == "Computer Vision":
-
         st.header("🧠 Computer Vision")
-        computer_vision.show()
+
         # ✅ SECTION 1: IMAGE UPLOAD + OBJECT DETECTION
         st.subheader("📷 Object Detection using YOLOv8")
 
-        uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+        uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], key="object_detection_upload")
 
         if uploaded_file:
             image = Image.open(uploaded_file).convert("RGB")
             st.image(image, caption="Original Image", use_container_width=True)
 
             img_array = np.array(image)
-            yolo_model = YOLO("yolov8n.pt")
 
             with st.spinner("Running YOLO object detection..."):
                 results = yolo_model(img_array)
                 annotated_img = results[0].plot()
 
             st.image(annotated_img, caption="Detected Objects", use_container_width=True)
-            
-        # ✅ SECTION 2: REAL-TIME OBJECT DETECTION USING OPENCV
+
+        # ✅ SECTION 2: Webcam REAL-TIME OBJECT DETECTION USING OPENCV
         st.subheader("🎥 Real-time Object Detection via Webcam (LOCAL ONLY)")
 
-        # Load YOLOv8 model once
-        yolo_model = YOLO("yolov8n.pt")
-
         run_webcam = st.checkbox('Start Webcam')
-            # Show result
-            st.image(annotated_img, caption="Detected Objects", use_container_width=True)
-
-        # ---- WEBCAM OBJECT DETECTION BLOCK ----
 
         FRAME_WINDOW = st.image([])
 
         if run_webcam:
-            # Initialize webcam
             cap = cv2.VideoCapture(0)
 
             if not cap.isOpened():
                 st.error("❌ Could not open webcam. Please check your camera.")
             else:
                 st.info("✅ Webcam is running. Close the app to release the webcam.")
-        class VideoProcessor(VideoTransformerBase):
-            def transform(self, frame):
-                # Get webcam frame as ndarray
-                img = frame.to_ndarray(format="bgr24")
-
-
-                # Run YOLO on frame
-                results = model(img)
-
-
-                # Plot the annotated results
-                annotated_frame = results[0].plot()
-
-                # Convert NumPy array back to video frame
-                return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
                 while run_webcam:
                     ret, frame = cap.read()
@@ -214,22 +189,13 @@ if LOGGED_IN:
                         st.warning("⚠️ Failed to grab frame.")
                         break
 
-                    # Run YOLO on the frame
+                    # Run YOLO on frame (reuse cached yolo_model)
                     results = yolo_model(frame)
                     annotated_frame = results[0].plot()
 
-                    # Convert for display
+                    # Convert for Streamlit display
                     annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
                     FRAME_WINDOW.image(annotated_frame)
 
                 cap.release()
-        st.info("👆 If the webcam doesn't start, try selecting your camera manually from the dropdown.")
 
-        # Streamlit UI block to start webcam
-        webrtc_streamer(
-            key="webcam",
-            mode=WebRtcMode.SENDRECV,
-            video_transformer_factory=VideoProcessor,
-            media_stream_constraints={"video": True, "audio": False},
-            async_processing=True,
-        )
