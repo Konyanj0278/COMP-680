@@ -9,10 +9,10 @@ ph = PasswordHasher()
 
 def email_handler(email,email_address):
     port = 25  # For SSL
-    with smtplib.SMTP("localhost", port) as server:
-        server.login("no-reply@mail.thesis.lan", "B0liLx0N0P5hGw") # Will need to create a new email for this
+    with smtplib.SMTP("SERVER", port) as server:
+        server.login("SERVER_LOGIN", "SERVER_PASSWORD") # Will need to create a new email for this
         server.ehlo()
-        server.sendmail("test@mail.thesis.lan", email_address, email)# use the created email for this
+        server.sendmail("FROM_EMAIL", email_address, email)# use the created email for this
 
 def check_usr_pass(username: str, password: str) -> bool:
     """
