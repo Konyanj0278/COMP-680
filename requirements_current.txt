@@ -29,7 +29,7 @@ extra-streamlit-components==0.1.71
 facenet-pytorch==2.5.3
 fer==22.5.1
 ffmpeg==1.4
-filelock==3.17.0
+filelock==3.20.1
 flatbuffers==25.2.10
 fonttools==4.56.0
 fsspec==2025.2.0
