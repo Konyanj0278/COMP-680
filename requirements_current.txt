@@ -83,7 +83,7 @@ opt_einsum==3.4.0
 packaging==24.2
 pandas==2.2.3
 parso==0.8.4
-pillow==10.4.0
+pillow==12.1.1
 plotly==6.0.0
 proglog==0.1.10
 prompt_toolkit==3.0.50
